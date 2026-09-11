@@ -1,0 +1,118 @@
+# =============================================================================
+# ConnectChat - Spring Boot & Web Application .gitignore
+# =============================================================================
+
+# --- Compiled Java Class Files & Build Directories ---
+target/
+build/
+out/
+bin/
+*.class
+
+# --- Package Archives ---
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# --- Maven & Gradle ---
+.mvn/wrapper/maven-wrapper.jar
+.gradle/
+build/
+!mvnw
+!mvnw.cmd
+!.mvn/wrapper/maven-wrapper.properties
+
+# --- Log Files ---
+*.log
+logs/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Runtime Databases & Data Directories ---
+data/
+*.db
+*.mv.db
+*.trace.db
+*.sqlite
+*.sqlite3
+
+# --- Local Environment & Secret Configuration ---
+.env
+.env.local
+.env.*.local
+application-local.properties
+application-local.yml
+application-local.yaml
+application-dev.properties.local
+application-prod.properties.local
+
+# --- Uploads & Temporary Directories ---
+uploads/
+attachments/
+storage/
+temp/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~
+
+# --- Virtual Machine Crash Logs ---
+hs_err_pid*
+replay_pid*
+
+# --- IDEs & Code Editors ---
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+nbactions.xml
+nb-configuration.xml
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# --- Operating System Files ---
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
