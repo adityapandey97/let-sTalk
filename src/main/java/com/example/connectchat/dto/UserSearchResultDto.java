@@ -4,18 +4,22 @@ public class UserSearchResultDto {
     private Long id;
     private String fullName;
     private String username;
+    private String email;
     private String bio;
+    private String avatarUrl;
     private String relationshipState; // NONE, OUTGOING_PENDING, INCOMING_PENDING, CONNECTED, REJECTED
     private Long requestId;
 
     public UserSearchResultDto() {
     }
 
-    public UserSearchResultDto(Long id, String fullName, String username, String bio, String relationshipState, Long requestId) {
+    public UserSearchResultDto(Long id, String fullName, String username, String email, String bio, String avatarUrl, String relationshipState, Long requestId) {
         this.id = id;
         this.fullName = fullName;
         this.username = username;
+        this.email = email;
         this.bio = bio;
+        this.avatarUrl = avatarUrl;
         this.relationshipState = relationshipState;
         this.requestId = requestId;
     }
@@ -44,12 +48,28 @@ public class UserSearchResultDto {
         this.username = username;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getBio() {
         return bio;
     }
 
     public void setBio(String bio) {
         this.bio = bio;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public String getRelationshipState() {

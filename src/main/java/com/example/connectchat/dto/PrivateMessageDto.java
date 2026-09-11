@@ -2,6 +2,7 @@ package com.example.connectchat.dto;
 
 import com.example.connectchat.model.Message;
 import com.example.connectchat.model.MessageStatus;
+import com.example.connectchat.model.MessageType;
 import java.time.LocalDateTime;
 
 public class PrivateMessageDto {
@@ -9,27 +10,38 @@ public class PrivateMessageDto {
     private Long senderId;
     private String senderUsername;
     private String senderFullName;
+    private String senderAvatarUrl;
     private Long receiverId;
     private String receiverUsername;
     private String receiverFullName;
+    private String receiverAvatarUrl;
     private String content;
+    private MessageType messageType;
+    private String mediaUrl;
+    private String mediaMetadata;
     private LocalDateTime sentAt;
     private MessageStatus status;
 
     public PrivateMessageDto() {
     }
 
-    public PrivateMessageDto(Long id, Long senderId, String senderUsername, String senderFullName,
-                             Long receiverId, String receiverUsername, String receiverFullName,
-                             String content, LocalDateTime sentAt, MessageStatus status) {
+    public PrivateMessageDto(Long id, Long senderId, String senderUsername, String senderFullName, String senderAvatarUrl,
+                             Long receiverId, String receiverUsername, String receiverFullName, String receiverAvatarUrl,
+                             String content, MessageType messageType, String mediaUrl, String mediaMetadata,
+                             LocalDateTime sentAt, MessageStatus status) {
         this.id = id;
         this.senderId = senderId;
         this.senderUsername = senderUsername;
         this.senderFullName = senderFullName;
+        this.senderAvatarUrl = senderAvatarUrl;
         this.receiverId = receiverId;
         this.receiverUsername = receiverUsername;
         this.receiverFullName = receiverFullName;
+        this.receiverAvatarUrl = receiverAvatarUrl;
         this.content = content;
+        this.messageType = messageType;
+        this.mediaUrl = mediaUrl;
+        this.mediaMetadata = mediaMetadata;
         this.sentAt = sentAt;
         this.status = status;
     }
@@ -41,10 +53,15 @@ public class PrivateMessageDto {
             message.getSender().getId(),
             message.getSender().getUsername(),
             message.getSender().getFullName(),
+            message.getSender().getAvatarUrl(),
             message.getReceiver().getId(),
             message.getReceiver().getUsername(),
             message.getReceiver().getFullName(),
+            message.getReceiver().getAvatarUrl(),
             message.getContent(),
+            message.getMessageType(),
+            message.getMediaUrl(),
+            message.getMediaMetadata(),
             message.getSentAt(),
             message.getStatus()
         );
@@ -82,6 +99,14 @@ public class PrivateMessageDto {
         this.senderFullName = senderFullName;
     }
 
+    public String getSenderAvatarUrl() {
+        return senderAvatarUrl;
+    }
+
+    public void setSenderAvatarUrl(String senderAvatarUrl) {
+        this.senderAvatarUrl = senderAvatarUrl;
+    }
+
     public Long getReceiverId() {
         return receiverId;
     }
@@ -106,12 +131,44 @@ public class PrivateMessageDto {
         this.receiverFullName = receiverFullName;
     }
 
+    public String getReceiverAvatarUrl() {
+        return receiverAvatarUrl;
+    }
+
+    public void setReceiverAvatarUrl(String receiverAvatarUrl) {
+        this.receiverAvatarUrl = receiverAvatarUrl;
+    }
+
     public String getContent() {
         return content;
     }
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public MessageType getMessageType() {
+        return messageType;
+    }
+
+    public void setMessageType(MessageType messageType) {
+        this.messageType = messageType;
+    }
+
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
+    }
+
+    public String getMediaMetadata() {
+        return mediaMetadata;
+    }
+
+    public void setMediaMetadata(String mediaMetadata) {
+        this.mediaMetadata = mediaMetadata;
     }
 
     public LocalDateTime getSentAt() {

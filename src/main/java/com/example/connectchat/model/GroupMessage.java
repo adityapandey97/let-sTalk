@@ -21,8 +21,18 @@ public class GroupMessage {
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
-    @Column(name = "content", nullable = false, length = 2000, columnDefinition = "TEXT")
+    @Column(name = "content", length = 4000, columnDefinition = "TEXT")
     private String content;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type", nullable = false, length = 20)
+    private MessageType messageType = MessageType.TEXT;
+
+    @Column(name = "media_url", columnDefinition = "LONGTEXT")
+    private String mediaUrl;
+
+    @Column(name = "media_metadata", columnDefinition = "TEXT")
+    private String mediaMetadata;
 
     @Column(name = "sent_at", nullable = false)
     private LocalDateTime sentAt;
@@ -30,17 +40,27 @@ public class GroupMessage {
     public GroupMessage() {
     }
 
-    public GroupMessage(ChatGroup group, User sender, String content) {
+    public GroupMessage(ChatGroup group, User sender, String content, MessageType messageType, String mediaUrl, String mediaMetadata) {
         this.group = group;
         this.sender = sender;
         this.content = content;
+        this.messageType = messageType != null ? messageType : MessageType.TEXT;
+        this.mediaUrl = mediaUrl;
+        this.mediaMetadata = mediaMetadata;
         this.sentAt = LocalDateTime.now();
+    }
+
+    public GroupMessage(ChatGroup group, User sender, String content) {
+        this(group, sender, content, MessageType.TEXT, null, null);
     }
 
     @PrePersist
     protected void onCreate() {
         if (this.sentAt == null) {
             this.sentAt = LocalDateTime.now();
+        }
+        if (this.messageType == null) {
+            this.messageType = MessageType.TEXT;
         }
     }
 
@@ -74,6 +94,30 @@ public class GroupMessage {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public MessageType getMessageType() {
+        return messageType;
+    }
+
+    public void setMessageType(MessageType messageType) {
+        this.messageType = messageType;
+    }
+
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
+    }
+
+    public String getMediaMetadata() {
+        return mediaMetadata;
+    }
+
+    public void setMediaMetadata(String mediaMetadata) {
+        this.mediaMetadata = mediaMetadata;
     }
 
     public LocalDateTime getSentAt() {

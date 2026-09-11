@@ -3,66 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ConnectChat – Real-Time Messaging Application</title>
+    <title>Let's Talk – Real-Time Messaging &amp; Media</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="app-background">
         <div class="ambient-orb orb-1"></div>
         <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
     </div>
 
     <!-- =========================================================================
-         1. PROFILE CREATION SCREEN
+         1. AUTHENTICATION / ONBOARDING SCREEN
          ========================================================================= -->
-    <div id="profile-screen" class="screen-view">
-        <main class="profile-card">
+    <div id="auth-screen" class="screen-view">
+        <main class="auth-card">
             <div class="brand-badge">
                 <div class="brand-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                     </svg>
                 </div>
-                <h1 class="brand-title">ConnectChat</h1>
+                <h1 class="brand-title">Let's Talk</h1>
             </div>
             
-            <p class="profile-tagline">Create your demo profile to connect and chat in real time with private and group messaging.</p>
+            <p class="brand-tagline">Connect instantly with rich stories, verified email login, voice notes, and media sharing.</p>
 
-            <form id="profile-form" class="form-container" onsubmit="event.preventDefault(); createProfile();">
+            <!-- Auth Mode Switcher Tabs -->
+            <div class="auth-tabs" role="tablist">
+                <button type="button" id="tab-btn-register" class="auth-tab active" onclick="switchAuthTab('register')">Create Account</button>
+                <button type="button" id="tab-btn-login" class="auth-tab" onclick="switchAuthTab('login')">Sign In</button>
+            </div>
+
+            <!-- REGISTER FORM -->
+            <form id="register-form" class="form-container" onsubmit="event.preventDefault(); handleRegister();">
                 <div class="form-group">
-                    <label for="profile-fullname" class="form-label">Full Name <span class="required">*</span></label>
-                    <input type="text" id="profile-fullname" class="form-control" placeholder="e.g. Aditya Pandey" required maxlength="50" autocomplete="name" />
+                    <label for="reg-fullname" class="form-label">Full Name <span class="required">*</span></label>
+                    <input type="text" id="reg-fullname" class="form-control" placeholder="e.g. Alex Johnson" required maxlength="60" autocomplete="name" />
                 </div>
 
-                <div class="form-group">
-                    <label for="profile-username" class="form-label">Username <span class="required">*</span></label>
-                    <div class="input-with-status">
-                        <span class="input-prefix">@</span>
-                        <input type="text" id="profile-username" class="form-control has-prefix" placeholder="aditya_123" required maxlength="30" autocomplete="username" />
-                        <span id="username-status-icon" class="status-icon"></span>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-username" class="form-label">Username <span class="required">*</span></label>
+                        <div class="input-with-status">
+                            <span class="input-prefix">@</span>
+                            <input type="text" id="reg-username" class="form-control has-prefix" placeholder="alex_99" required maxlength="30" autocomplete="username" />
+                            <span id="username-status-icon" class="status-icon"></span>
+                        </div>
                     </div>
-                    <div id="username-status-msg" class="field-feedback">3-30 chars, letters, numbers, and underscores only.</div>
+
+                    <div class="form-group">
+                        <label for="reg-email" class="form-label">Email Address <span class="required">*</span></label>
+                        <div class="input-with-status">
+                            <input type="email" id="reg-email" class="form-control" placeholder="alex@example.com" required maxlength="80" autocomplete="email" />
+                            <span id="email-status-icon" class="status-icon"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Avatar Selection & Preview -->
+                <div class="form-group">
+                    <label class="form-label">Profile Picture (Pick Avatar or Upload)</label>
+                    <div class="avatar-picker-row">
+                        <div class="avatar-preview-box" id="reg-avatar-preview">
+                            <span id="reg-avatar-text">👤</span>
+                        </div>
+                        <div class="avatar-preset-list" id="reg-avatar-presets">
+                            <!-- Presets dynamically inserted -->
+                        </div>
+                        <label class="avatar-upload-label" for="reg-avatar-file">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <span>Upload</span>
+                            <input type="file" id="reg-avatar-file" accept="image/*" class="hidden-file-input" onchange="handleAvatarFileSelect(this, 'reg')" />
+                        </label>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="profile-bio" class="form-label">Bio (Optional)</label>
-                    <textarea id="profile-bio" class="form-control" rows="2" placeholder="Software Engineer | Tech Enthusiast..." maxlength="250"></textarea>
+                    <label for="reg-bio" class="form-label">Bio / Status</label>
+                    <input type="text" id="reg-bio" class="form-control" placeholder="Hey there! I am using Let's Talk." maxlength="200" />
                 </div>
 
-                <div id="profile-error" class="error-banner hidden" role="alert"></div>
+                <div id="register-error" class="error-banner hidden" role="alert"></div>
 
-                <button type="submit" id="btn-create-profile" class="btn-primary">
-                    <span>Create Profile & Launch</span>
+                <button type="submit" id="btn-register" class="btn-primary">
+                    <span>Create Account &amp; Verify Email</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                         <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                 </button>
             </form>
+
+            <!-- LOGIN FORM -->
+            <form id="login-form" class="form-container hidden" onsubmit="event.preventDefault(); handleLogin();">
+                <div class="form-group">
+                    <label for="login-identifier" class="form-label">Email or Username <span class="required">*</span></label>
+                    <div class="input-with-status">
+                        <input type="text" id="login-identifier" class="form-control" placeholder="alex@example.com or @alex_99" required autocomplete="username" />
+                    </div>
+                    <div class="field-feedback">Sign in quickly with your registered email or handle.</div>
+                </div>
+
+                <div id="login-error" class="error-banner hidden" role="alert"></div>
+
+                <button type="submit" id="btn-login" class="btn-primary">
+                    <span>Sign In to Let's Talk</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- OTP VERIFICATION VIEW (Inside Auth Modal) -->
+            <div id="otp-container" class="otp-view hidden">
+                <div class="otp-header">
+                    <div class="otp-icon-wrap">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </div>
+                    <h3>Verify Your Email</h3>
+                    <p>Enter the 6-digit verification code sent to <strong id="otp-target-email">email@example.com</strong></p>
+                </div>
+
+                <div id="otp-demo-hint" class="demo-otp-banner">
+                    <div class="otp-banner-text">
+                        <span>Simulation Code: </span><strong id="demo-otp-code">123456</strong>
+                    </div>
+                    <button type="button" class="btn-quick-fill" onclick="quickFillOtp()">Quick Fill</button>
+                </div>
+
+                <form id="otp-form" onsubmit="event.preventDefault(); submitOtpVerification();">
+                    <div class="otp-inputs-row">
+                        <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
+                        <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
+                        <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
+                        <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
+                        <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
+                        <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
+                    </div>
+
+                    <div id="otp-error" class="error-banner hidden" role="alert"></div>
+
+                    <button type="submit" id="btn-verify-otp" class="btn-primary">
+                        <span>Verify &amp; Launch Let's Talk</span>
+                    </button>
+
+                    <div class="otp-footer">
+                        <button type="button" class="btn-link" onclick="resendOtp()">Resend Code</button>
+                        <span>•</span>
+                        <button type="button" class="btn-link" onclick="cancelOtp()">Back to Sign In</button>
+                    </div>
+                </form>
+            </div>
         </main>
     </div>
 
@@ -82,7 +179,7 @@
                                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                             </svg>
                         </div>
-                        <h2 class="sidebar-brand-name">ConnectChat</h2>
+                        <h2 class="sidebar-brand-name">Let's Talk</h2>
                     </div>
                     <div id="connection-badge" class="connection-pill disconnected" title="WebSocket Status">
                         <span class="status-dot"></span>
@@ -92,37 +189,60 @@
 
                 <!-- Current User Profile Card -->
                 <div class="current-user-card">
-                    <div class="user-avatar" id="current-user-avatar">?</div>
-                    <div class="user-details">
-                        <h3 class="user-fullname" id="current-user-name">Loading...</h3>
+                    <div class="user-avatar-wrap" onclick="openProfileModal()">
+                        <div class="user-avatar" id="current-user-avatar">?</div>
+                        <span class="user-online-badge"></span>
+                    </div>
+                    <div class="user-details" onclick="openProfileModal()">
+                        <div class="user-name-row">
+                            <h3 class="user-fullname" id="current-user-name">Loading...</h3>
+                            <span id="user-verified-badge" class="verified-icon" title="Email Verified">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="#38bdf8" stroke="#0f172a" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            </span>
+                        </div>
                         <p class="user-username" id="current-user-tag">@username</p>
                     </div>
-                    <button class="icon-button" id="btn-switch-profile" title="Switch Profile / Logout">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            <polyline points="16 17 21 12 16 7"></polyline>
-                            <line x1="21" y1="12" x2="9" y2="12"></line>
-                        </svg>
-                    </button>
+                    <div class="user-card-actions">
+                        <button class="icon-button" onclick="openProfileModal()" title="Customize Profile &amp; Wallpaper">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                        <button class="icon-button" id="btn-switch-profile" title="Switch Account / Logout">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 24-HOUR STORIES / STATUS TRAY -->
+                <div class="stories-tray-section">
+                    <div class="stories-header">
+                        <span class="stories-title">STORIES &bull; 24H STATUS</span>
+                        <button class="btn-add-story-sm" onclick="openStoryCreatorModal()" title="Add to Story">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>Add</span>
+                        </button>
+                    </div>
+                    <div class="stories-scroll-container" id="stories-tray">
+                        <!-- My Story Node -->
+                        <div class="story-item" onclick="openStoryCreatorModal()">
+                            <div class="story-ring-wrap my-story">
+                                <div class="story-avatar" id="my-story-avatar">?</div>
+                                <div class="story-plus-badge">+</div>
+                            </div>
+                            <span class="story-username">Your Story</span>
+                        </div>
+                        <!-- Contact stories dynamically inserted -->
+                    </div>
                 </div>
 
                 <!-- Quick Action Navigation -->
                 <div class="sidebar-actions">
                     <button id="btn-open-search" class="action-card-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         <span>Search Users</span>
                     </button>
 
                     <button id="btn-open-requests" class="action-card-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="8.5" cy="7" r="4"></circle>
-                            <line x1="20" y1="8" x2="20" y2="14"></line>
-                            <line x1="23" y1="11" x2="17" y2="11"></line>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                         <span>Requests</span>
                         <span id="requests-badge" class="badge hidden">0</span>
                     </button>
@@ -138,7 +258,7 @@
                             <span class="section-counter" id="chats-count">0</span>
                         </div>
                         <div id="chats-list" class="conversation-list">
-                            <div class="list-empty-hint">No connections yet. Search users to start chatting!</div>
+                            <div class="list-empty-hint">No connections yet. Search users to start talking!</div>
                         </div>
                     </div>
 
@@ -147,10 +267,7 @@
                         <div class="section-header">
                             <span class="section-title">GROUPS</span>
                             <button id="btn-open-create-group" class="section-add-btn" title="Create New Group">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                                 <span>New</span>
                             </button>
                         </div>
@@ -168,12 +285,12 @@
                 <!-- 1. EMPTY STATE (When no conversation is selected) -->
                 <div id="chat-empty-state" class="empty-state-container">
                     <div class="empty-state-illustration">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        <svg width="68" height="68" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                         </svg>
                     </div>
-                    <h2>Welcome to ConnectChat</h2>
-                    <p>Select a direct chat or group from the sidebar, or search for users to send connection requests.</p>
+                    <h2>Welcome to Let's Talk</h2>
+                    <p>Select a direct chat or group to start exchanging messages, voice notes, photos, videos, and contact cards.</p>
                 </div>
 
                 <!-- 2. ACTIVE CONVERSATION PANE -->
@@ -183,9 +300,7 @@
                     <header class="chat-header">
                         <div class="chat-header-left">
                             <button id="btn-mobile-back" class="btn-mobile-back" aria-label="Back to chat list">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
-                                </svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                             </button>
                             <div class="chat-avatar" id="chat-header-avatar">?</div>
                             <div class="chat-header-meta">
@@ -194,12 +309,11 @@
                             </div>
                         </div>
                         <div class="chat-header-right">
+                            <button id="btn-view-chat-profile" class="icon-button" title="View Profile" onclick="viewCurrentChatContactProfile()">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            </button>
                             <button id="btn-group-info" class="icon-button hidden" title="Group Information">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                             </button>
                         </div>
                     </header>
@@ -209,22 +323,66 @@
                         <!-- Message bubbles will be dynamically rendered here -->
                     </div>
 
-                    <!-- Message Input Area -->
+                    <!-- Message Input Area with Rich Media Controls -->
                     <footer class="chat-input-wrapper">
+                        <!-- Voice Recording Indicator Bar -->
+                        <div id="voice-recording-bar" class="voice-recording-bar hidden">
+                            <div class="recording-indicator-pulse"></div>
+                            <span class="recording-time" id="recording-timer-text">0:00</span>
+                            <div class="recording-waveform-bars">
+                                <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                            </div>
+                            <div class="recording-actions">
+                                <button type="button" class="btn-cancel-recording" onclick="cancelVoiceRecording()" title="Cancel Recording">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                                <button type="button" class="btn-send-recording" onclick="finishAndSendVoiceRecording()" title="Send Voice Note">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Standard Form Bar -->
                         <form id="message-form" class="message-form" onsubmit="event.preventDefault(); sendMessage();">
+                            <!-- Attachments Dropdown Menu -->
+                            <div class="attachment-menu-wrap">
+                                <button type="button" id="btn-toggle-attach" class="btn-attach" onclick="toggleAttachmentMenu(event)" title="Share Media, Photos, Video, or Contact">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                </button>
+                                <div id="attachment-menu" class="attachment-dropdown hidden">
+                                    <button type="button" class="attach-option" onclick="triggerImageUpload()">
+                                        <span class="attach-icon bg-image">🖼️</span>
+                                        <span>Send Image</span>
+                                    </button>
+                                    <button type="button" class="attach-option" onclick="triggerVideoUpload()">
+                                        <span class="attach-icon bg-video">🎥</span>
+                                        <span>Send Video</span>
+                                    </button>
+                                    <button type="button" class="attach-option" onclick="openShareContactModal()">
+                                        <span class="attach-icon bg-contact">👤</span>
+                                        <span>Send Contact</span>
+                                    </button>
+                                </div>
+                                <input type="file" id="media-image-file" accept="image/*" class="hidden-file-input" onchange="handleImageMediaUpload(this)" />
+                                <input type="file" id="media-video-file" accept="video/*" class="hidden-file-input" onchange="handleVideoMediaUpload(this)" />
+                            </div>
+
                             <input 
                                 type="text" 
                                 id="message-input" 
                                 class="message-input-field" 
                                 placeholder="Type a message..." 
-                                maxlength="2000" 
+                                maxlength="4000" 
                                 autocomplete="off"
                             />
+
+                            <!-- Voice Note Button -->
+                            <button type="button" id="btn-voice-record" class="btn-voice-record" onclick="toggleVoiceRecording()" title="Record Voice Note">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                            </button>
+
                             <button type="submit" id="btn-send-message" class="btn-send" aria-label="Send Message">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                </svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                             </button>
                         </form>
                     </footer>
@@ -237,8 +395,226 @@
     </div>
 
     <!-- =========================================================================
-         3. MODALS
+         3. MODALS & OVERLAYS
          ========================================================================= -->
+
+    <!-- STORY CREATOR MODAL -->
+    <div id="modal-story-creator" class="modal-backdrop hidden">
+        <div class="modal-card story-creator-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Story (24h Status)</h3>
+                <button class="btn-close-modal" onclick="closeModal('modal-story-creator')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs" style="margin-bottom: 1.25rem;">
+                    <button type="button" id="tab-story-media" class="auth-tab active" onclick="switchStoryTab('media')">Photo Story</button>
+                    <button type="button" id="tab-story-text" class="auth-tab" onclick="switchStoryTab('text')">Text Status</button>
+                </div>
+
+                <!-- Media Story Form -->
+                <form id="form-media-story" onsubmit="event.preventDefault(); submitStory('IMAGE');">
+                    <div class="form-group">
+                        <label class="form-label">Select Photo / Graphic</label>
+                        <div class="story-upload-preview-box" id="story-upload-preview" onclick="document.getElementById('story-media-file').click()">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            <span>Click to upload image</span>
+                        </div>
+                        <input type="file" id="story-media-file" accept="image/*" class="hidden-file-input" onchange="handleStoryFileSelect(this)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="story-media-caption" class="form-label">Caption (Optional)</label>
+                        <input type="text" id="story-media-caption" class="form-control" placeholder="Add a caption..." maxlength="200" />
+                    </div>
+
+                    <div class="modal-footer-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal('modal-story-creator')">Cancel</button>
+                        <button type="submit" class="btn-primary">Share Photo Story</button>
+                    </div>
+                </form>
+
+                <!-- Text Status Form -->
+                <form id="form-text-story" class="hidden" onsubmit="event.preventDefault(); submitStory('TEXT');">
+                    <div class="story-text-canvas" id="story-text-preview" style="background: linear-gradient(135deg, #6366f1, #a855f7);">
+                        <textarea id="story-text-input" placeholder="Type your status update..." maxlength="300" oninput="updateStoryTextPreview(this.value)"></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label class="form-label">Pick Background Palette</label>
+                        <div class="palette-options">
+                            <div class="palette-swatch active" style="background: linear-gradient(135deg, #6366f1, #a855f7);" onclick="setStoryPalette('linear-gradient(135deg, #6366f1, #a855f7)', this)"></div>
+                            <div class="palette-swatch" style="background: linear-gradient(135deg, #0ea5e9, #10b981);" onclick="setStoryPalette('linear-gradient(135deg, #0ea5e9, #10b981)', this)"></div>
+                            <div class="palette-swatch" style="background: linear-gradient(135deg, #f43f5e, #fb923c);" onclick="setStoryPalette('linear-gradient(135deg, #f43f5e, #fb923c)', this)"></div>
+                            <div class="palette-swatch" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);" onclick="setStoryPalette('linear-gradient(135deg, #8b5cf6, #ec4899)', this)"></div>
+                            <div class="palette-swatch" style="background: linear-gradient(135deg, #1e293b, #0f172a);" onclick="setStoryPalette('linear-gradient(135deg, #1e293b, #0f172a)', this)"></div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal('modal-story-creator')">Cancel</button>
+                        <button type="submit" class="btn-primary">Share Text Status</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN STORY VIEWER OVERLAY -->
+    <div id="overlay-story-viewer" class="story-viewer-overlay hidden">
+        <div class="story-viewer-container">
+            <!-- Progress Bar Segments -->
+            <div class="story-progress-row" id="story-progress-row">
+                <!-- Segments inserted dynamically -->
+            </div>
+
+            <!-- Header Info -->
+            <div class="story-viewer-header">
+                <div class="story-author-details">
+                    <div class="story-author-avatar" id="story-viewer-avatar">?</div>
+                    <div>
+                        <div class="story-author-name" id="story-viewer-name">Author Name</div>
+                        <div class="story-author-time" id="story-viewer-time">2 hours ago</div>
+                    </div>
+                </div>
+                <div class="story-header-actions">
+                    <button class="btn-delete-story hidden" id="btn-delete-current-story" onclick="deleteCurrentStory()" title="Delete Story">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                    <button class="btn-close-story" onclick="closeStoryViewer()">&times;</button>
+                </div>
+            </div>
+
+            <!-- Story Media Body -->
+            <div class="story-content-body" id="story-content-body">
+                <!-- Image or Text Status -->
+            </div>
+
+            <!-- Slide Navigation Tap Areas -->
+            <div class="story-nav-tap tap-left" onclick="storyPrevSlide()"></div>
+            <div class="story-nav-tap tap-right" onclick="storyNextSlide()"></div>
+
+            <!-- Footer Reply Bar -->
+            <div class="story-footer-reply" id="story-footer-reply">
+                <input type="text" id="story-reply-input" placeholder="Reply to story..." onkeydown="if(event.key==='Enter') sendStoryReply()" />
+                <button type="button" class="btn-send-reply" onclick="sendStoryReply()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE CUSTOMIZATION & WALLPAPER MODAL -->
+    <div id="modal-profile" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Profile &amp; Appearance</h3>
+                <button class="btn-close-modal" onclick="closeModal('modal-profile')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-profile" onsubmit="event.preventDefault(); saveProfileSettings();">
+                    <div class="form-group">
+                        <label class="form-label">Profile Avatar</label>
+                        <div class="avatar-picker-row">
+                            <div class="avatar-preview-box" id="edit-avatar-preview">
+                                <span>?</span>
+                            </div>
+                            <div class="avatar-preset-list" id="edit-avatar-presets"></div>
+                            <label class="avatar-upload-label" for="edit-avatar-file">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                <span>Upload</span>
+                                <input type="file" id="edit-avatar-file" accept="image/*" class="hidden-file-input" onchange="handleAvatarFileSelect(this, 'edit')" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-fullname" class="form-label">Full Name</label>
+                        <input type="text" id="edit-fullname" class="form-control" required maxlength="60" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-bio" class="form-label">Bio / Status</label>
+                        <textarea id="edit-bio" class="form-control" rows="2" maxlength="250" placeholder="Tell others about yourself..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Chat Wallpaper Background</label>
+                        <div class="wallpaper-selector-grid">
+                            <div class="wallpaper-option active" data-bg="default" onclick="selectChatWallpaper('default', this)">
+                                <div class="wp-preview wp-default"></div>
+                                <span>Default Glass</span>
+                            </div>
+                            <div class="wallpaper-option" data-bg="midnight" onclick="selectChatWallpaper('midnight', this)">
+                                <div class="wp-preview wp-midnight"></div>
+                                <span>Midnight Blue</span>
+                            </div>
+                            <div class="wallpaper-option" data-bg="sunset" onclick="selectChatWallpaper('sunset', this)">
+                                <div class="wp-preview wp-sunset"></div>
+                                <span>Synth Sunset</span>
+                            </div>
+                            <div class="wallpaper-option" data-bg="emerald" onclick="selectChatWallpaper('emerald', this)">
+                                <div class="wp-preview wp-emerald"></div>
+                                <span>Emerald Glow</span>
+                            </div>
+                            <div class="wallpaper-option" data-bg="doodle" onclick="selectChatWallpaper('doodle', this)">
+                                <div class="wp-preview wp-doodle"></div>
+                                <span>Dark Doodles</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal('modal-profile')">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW CONTACT PROFILE MODAL -->
+    <div id="modal-view-contact" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Contact Info</h3>
+                <button class="btn-close-modal" onclick="closeModal('modal-view-contact')">&times;</button>
+            </div>
+            <div class="modal-body contact-profile-body">
+                <div class="contact-profile-avatar-wrap">
+                    <div class="contact-profile-avatar" id="view-contact-avatar">?</div>
+                </div>
+                <h3 class="contact-profile-name" id="view-contact-name">User Name</h3>
+                <p class="contact-profile-username" id="view-contact-username">@username</p>
+                <p class="contact-profile-email" id="view-contact-email">email@example.com</p>
+                <div class="contact-profile-bio-box">
+                    <span class="bio-label">About</span>
+                    <p id="view-contact-bio">No bio available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHARE CONTACT MODAL -->
+    <div id="modal-share-contact" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Share a Contact</h3>
+                <button class="btn-close-modal" onclick="closeModal('modal-share-contact')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-empty-hint" style="margin-bottom: 1rem;">Select one of your connected contacts to share in this chat:</div>
+                <div id="share-contact-list" class="modal-list-container">
+                    <!-- Connections listed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIGHTBOX IMAGE VIEWER -->
+    <div id="lightbox-modal" class="lightbox-overlay hidden" onclick="closeLightbox()">
+        <button class="btn-close-lightbox" onclick="closeLightbox()">&times;</button>
+        <img id="lightbox-img" src="" alt="Full view" onclick="event.stopPropagation()" />
+    </div>
 
     <!-- SEARCH USERS MODAL -->
     <div id="modal-search" class="modal-backdrop hidden">
@@ -249,14 +625,11 @@
             </div>
             <div class="modal-body">
                 <div class="search-input-wrapper">
-                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" id="search-user-input" class="form-control" placeholder="Search by username..." autocomplete="off" />
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="search-user-input" class="form-control" placeholder="Search by name, handle, or email..." autocomplete="off" />
                 </div>
                 <div id="search-results-list" class="modal-list-container">
-                    <div class="modal-empty-hint">Type a username to find people.</div>
+                    <div class="modal-empty-hint">Type a name, @username, or email to find people.</div>
                 </div>
             </div>
         </div>
@@ -288,11 +661,11 @@
                 <form id="create-group-form" onsubmit="event.preventDefault(); submitCreateGroup();">
                     <div class="form-group">
                         <label for="group-name-input" class="form-label">Group Name <span class="required">*</span></label>
-                        <input type="text" id="group-name-input" class="form-control" placeholder="e.g. College Friends, Dev Team" required maxlength="100" />
+                        <input type="text" id="group-name-input" class="form-control" placeholder="e.g. Project Team, Friends Hangout" required maxlength="100" />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Select Members (Accepted Connections)</label>
+                        <label class="form-label">Select Members</label>
                         <div id="group-members-checklist" class="members-checklist">
                             <div class="modal-empty-hint">Loading connections...</div>
                         </div>

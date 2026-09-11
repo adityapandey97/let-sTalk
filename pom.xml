@@ -12,10 +12,10 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>connectchat</artifactId>
+    <artifactId>letstalk</artifactId>
     <version>1.0.0</version>
-    <name>connectchat</name>
-    <description>ConnectChat – Real-Time Messaging Application using Spring Boot, JPA, MySQL, WebSocket STOMP, HTML, CSS, and JavaScript</description>
+    <name>letstalk</name>
+    <description>Let's Talk – Real-Time Messaging &amp; Media Application with Stories, Email Verification, Voice Notes, and Media Sharing</description>
 
     <properties>
         <java.version>17</java.version>

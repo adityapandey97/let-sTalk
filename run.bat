@@ -1,9 +1,9 @@
 @echo off
 setlocal
-title ConnectChat - Real-Time Messaging Application
+title Let's Talk - Real-Time Messaging & Media Application
 
 echo =======================================================
-echo          Starting ConnectChat Application
+echo          Starting Let's Talk Application
 echo =======================================================
 echo.
 

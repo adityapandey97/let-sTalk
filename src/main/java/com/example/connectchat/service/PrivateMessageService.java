@@ -9,6 +9,7 @@ import com.example.connectchat.exception.ResourceNotFoundException;
 import com.example.connectchat.exception.UnauthorizedException;
 import com.example.connectchat.model.Message;
 import com.example.connectchat.model.MessageStatus;
+import com.example.connectchat.model.MessageType;
 import com.example.connectchat.model.User;
 import com.example.connectchat.repository.ConnectionRequestRepository;
 import com.example.connectchat.repository.MessageRepository;
@@ -45,12 +46,18 @@ public class PrivateMessageService {
             throw new BadRequestException("Sender ID and Receiver ID are required");
         }
 
-        if (request.getContent() == null || request.getContent().trim().isEmpty()) {
+        MessageType type = request.getMessageType() != null ? request.getMessageType() : MessageType.TEXT;
+
+        String content = request.getContent();
+        if (type == MessageType.TEXT && (content == null || content.trim().isEmpty())) {
             throw new BadRequestException("Message content cannot be empty");
         }
+        if (content == null) {
+            content = "";
+        }
 
-        if (request.getContent().length() > 2000) {
-            throw new BadRequestException("Message exceeds maximum length of 2000 characters");
+        if (content.length() > 4000) {
+            throw new BadRequestException("Message exceeds maximum length of 4000 characters");
         }
 
         User sender = userRepository.findById(request.getSenderId())
@@ -68,7 +75,10 @@ public class PrivateMessageService {
         Message message = new Message(
             sender,
             receiver,
-            request.getContent().trim(),
+            content.trim(),
+            type,
+            request.getMediaUrl(),
+            request.getMediaMetadata(),
             MessageStatus.SENT
         );
 

@@ -7,6 +7,7 @@ import com.example.connectchat.exception.UnauthorizedException;
 import com.example.connectchat.model.ChatGroup;
 import com.example.connectchat.model.GroupMember;
 import com.example.connectchat.model.GroupMessage;
+import com.example.connectchat.model.MessageType;
 import com.example.connectchat.model.User;
 import com.example.connectchat.repository.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -157,12 +158,18 @@ public class GroupService {
             throw new BadRequestException("Group ID and Sender ID are required");
         }
 
-        if (messageDto.getContent() == null || messageDto.getContent().trim().isEmpty()) {
+        MessageType type = messageDto.getMessageType() != null ? messageDto.getMessageType() : MessageType.TEXT;
+
+        String content = messageDto.getContent();
+        if (type == MessageType.TEXT && (content == null || content.trim().isEmpty())) {
             throw new BadRequestException("Message content cannot be empty");
         }
+        if (content == null) {
+            content = "";
+        }
 
-        if (messageDto.getContent().length() > 2000) {
-            throw new BadRequestException("Message exceeds maximum length of 2000 characters");
+        if (content.length() > 4000) {
+            throw new BadRequestException("Message exceeds maximum length of 4000 characters");
         }
 
         ChatGroup group = chatGroupRepository.findById(messageDto.getGroupId())
@@ -177,7 +184,14 @@ public class GroupService {
             throw new UnauthorizedException("Unauthorized: You cannot send messages to a group you are not a member of");
         }
 
-        GroupMessage message = new GroupMessage(group, sender, messageDto.getContent().trim());
+        GroupMessage message = new GroupMessage(
+            group,
+            sender,
+            content.trim(),
+            type,
+            messageDto.getMediaUrl(),
+            messageDto.getMediaMetadata()
+        );
         GroupMessage saved = groupMessageRepository.save(message);
 
         GroupMessageDto broadcastDto = GroupMessageDto.fromEntity(saved);
