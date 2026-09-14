@@ -60,4 +60,25 @@ public class GroupController {
     public void sendGroupMessage(@Payload GroupMessageDto messageDto) {
         groupService.sendGroupMessage(messageDto);
     }
+
+    /**
+     * REST endpoint to clear group chat messages
+     */
+    @DeleteMapping("/api/groups/{groupId}/messages")
+    public ResponseEntity<java.util.Map<String, Object>> deleteGroupMessages(@PathVariable("groupId") Long groupId,
+                                                                             @RequestParam("userId") Long userId) {
+        groupService.deleteGroupMessages(groupId, userId);
+        return ResponseEntity.ok(java.util.Map.of("message", "Group conversation cleared", "success", true));
+    }
+
+    /**
+     * REST endpoint to delete a specific group message
+     */
+    @DeleteMapping("/api/groups/{groupId}/messages/{messageId}")
+    public ResponseEntity<java.util.Map<String, Object>> deleteGroupMessage(@PathVariable("groupId") Long groupId,
+                                                                            @PathVariable("messageId") Long messageId,
+                                                                            @RequestParam("userId") Long userId) {
+        groupService.deleteGroupMessage(groupId, messageId, userId);
+        return ResponseEntity.ok(java.util.Map.of("message", "Group message deleted", "success", true));
+    }
 }

@@ -165,4 +165,48 @@ public class PrivateMessageService {
             }
         }
     }
+
+    @Transactional
+    public void deleteConversation(Long userId, Long otherUserId) {
+        if (userId == null || otherUserId == null) {
+            throw new BadRequestException("User IDs are required");
+        }
+
+        userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        userRepository.findById(otherUserId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + otherUserId));
+
+        messageRepository.deleteConversationBetween(userId, otherUserId);
+
+        NotificationDto deleteNotif = new NotificationDto("CONVERSATION_CLEARED", "Chat history cleared");
+        deleteNotif.setSenderId(userId);
+        messagingTemplate.convertAndSend("/topic/user/" + otherUserId + "/notifications", deleteNotif);
+        messagingTemplate.convertAndSend("/topic/user/" + userId + "/notifications", deleteNotif);
+    }
+
+    @Transactional
+    public void deleteMessage(Long messageId, Long userId) {
+        if (messageId == null || userId == null) {
+            throw new BadRequestException("Message ID and User ID are required");
+        }
+
+        Message msg = messageRepository.findById(messageId)
+            .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + messageId));
+
+        Long senderId = msg.getSender().getId();
+        Long receiverId = msg.getReceiver().getId();
+
+        if (!senderId.equals(userId) && !receiverId.equals(userId)) {
+            throw new UnauthorizedException("You are not authorized to delete this message");
+        }
+
+        messageRepository.delete(msg);
+
+        NotificationDto deleteNotif = new NotificationDto("MESSAGE_DELETED", "Message deleted");
+        deleteNotif.setMessageId(messageId);
+        deleteNotif.setSenderId(userId);
+        messagingTemplate.convertAndSend("/topic/user/" + senderId + "/notifications", deleteNotif);
+        messagingTemplate.convertAndSend("/topic/user/" + receiverId + "/notifications", deleteNotif);
+    }
 }

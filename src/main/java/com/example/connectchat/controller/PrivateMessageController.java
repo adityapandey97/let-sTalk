@@ -47,4 +47,24 @@ public class PrivateMessageController {
     public void updateMessageStatus(@Payload MessageStatusUpdateRequest request) {
         privateMessageService.updateMessageStatus(request);
     }
+
+    /**
+     * REST endpoint to clear entire conversation between two users
+     */
+    @DeleteMapping("/api/messages/private")
+    public ResponseEntity<java.util.Map<String, Object>> deleteConversation(@RequestParam("userId") Long userId,
+                                                                             @RequestParam("otherUserId") Long otherUserId) {
+        privateMessageService.deleteConversation(userId, otherUserId);
+        return ResponseEntity.ok(java.util.Map.of("message", "Conversation deleted successfully", "success", true));
+    }
+
+    /**
+     * REST endpoint to delete a specific message
+     */
+    @DeleteMapping("/api/messages/{messageId}")
+    public ResponseEntity<java.util.Map<String, Object>> deleteMessage(@PathVariable("messageId") Long messageId,
+                                                                       @RequestParam("userId") Long userId) {
+        privateMessageService.deleteMessage(messageId, userId);
+        return ResponseEntity.ok(java.util.Map.of("message", "Message deleted successfully", "success", true));
+    }
 }

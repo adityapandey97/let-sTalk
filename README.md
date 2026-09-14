@@ -8,28 +8,34 @@ It supports unique verified email login, 24-hour status stories, voice note audi
 
 ## 🌟 Key Features
 
-1. **Unique Email Login & OTP Verification**:
+1. **Unique Email/Handle Login & 4-Digit OTP Verification**:
    - Register with Full Name, Unique Username, and Unique Email.
-   - Built-in secure 6-digit OTP verification code workflow.
-   - Fast login via registered email address or username handle.
+   - Built-in secure random **4-digit OTP verification code** workflow.
+   - Fast login via registered email address or username handle with 4-digit OTP verification.
+   - Exact match verification security (`"Verification code does not match"` error feedback).
 
-2. **24-Hour Stories & Status**:
+2. **Delete / Clear Chat Management**:
+   - 🗑️ **Clear Conversation**: 1-click option in chat header to clear the entire chat history between users or in groups.
+   - 💬 **Delete Individual Messages**: Hover action button on any message bubble to delete specific messages in real-time.
+   - ⚡ **Real-Time Sync**: Instant WebSocket broadcasting to update both conversation viewports when messages/chats are cleared.
+
+3. **24-Hour Stories & Status**:
    - Post photo stories with captions or vibrant text statuses with custom color gradient palettes.
    - Real-time active status rings around user avatars.
    - Instagram/WhatsApp-style full-screen story viewer with auto-advancing progress timers, slide navigation, and direct reply-to-chat.
 
-3. **Rich Media Messaging**:
+4. **Rich Media Messaging**:
    - 🖼️ **Send Images**: Inline photo thumbnails with a full-screen Lightbox image viewer.
    - 🎙️ **Voice Notes**: In-browser audio recording via `MediaRecorder` with live recording timer, wave visualizer, and custom inline playback controls.
    - 🎥 **Send Videos**: Video player embedded directly inside message bubbles.
    - 👤 **Send Contact Cards**: Share contacts with friends with 1-click connect/chat action.
 
-4. **Profile & Wallpaper Customization**:
+5. **Profile & Wallpaper Customization**:
    - Custom profile pictures (custom image upload or stylish 3D avatar presets).
    - Bio & status updates.
    - 5 beautiful chat background wallpaper themes (Default Glass, Midnight Blue, Synth Sunset, Emerald Glow, Dark Doodles).
 
-5. **Private & Group Real-Time Chat**:
+6. **Private & Group Real-Time Chat**:
    - WebSocket STOMP for sub-millisecond message delivery.
    - WhatsApp-style single/double checkmark delivery and read status receipts.
    - Multi-user group conversations with member management.

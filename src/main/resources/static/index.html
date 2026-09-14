@@ -106,17 +106,18 @@
                     <div class="input-with-status">
                         <input type="text" id="login-identifier" class="form-control" placeholder="alex@example.com or @alex_99" required autocomplete="username" />
                     </div>
-                    <div class="field-feedback">Sign in quickly with your registered email or handle.</div>
+                    <div class="field-feedback">Sign in with 4-digit OTP verification code or direct access.</div>
                 </div>
 
                 <div id="login-error" class="error-banner hidden" role="alert"></div>
 
-                <button type="submit" id="btn-login" class="btn-primary">
-                    <span>Sign In to Let's Talk</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
+                <button type="button" id="btn-login-otp" class="btn-primary" onclick="handleLoginWithOtp()" style="margin-bottom: 0.6rem;">
+                    <span>Send 4-Digit OTP Code</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </button>
+
+                <button type="submit" id="btn-login" class="btn-secondary" style="width: 100%;">
+                    <span>Quick Sign In</span>
                 </button>
             </form>
 
@@ -126,21 +127,19 @@
                     <div class="otp-icon-wrap">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                     </div>
-                    <h3>Verify Your Email</h3>
-                    <p>Enter the 6-digit verification code sent to <strong id="otp-target-email">email@example.com</strong></p>
+                    <h3>Verify Your Account</h3>
+                    <p>Enter the 4-digit verification code sent to <strong id="otp-target-email">email@example.com</strong></p>
                 </div>
 
                 <div id="otp-demo-hint" class="demo-otp-banner">
                     <div class="otp-banner-text">
-                        <span>Simulation Code: </span><strong id="demo-otp-code">123456</strong>
+                        <span>Simulation Code: </span><strong id="demo-otp-code">1234</strong>
                     </div>
                     <button type="button" class="btn-quick-fill" onclick="quickFillOtp()">Quick Fill</button>
                 </div>
 
                 <form id="otp-form" onsubmit="event.preventDefault(); submitOtpVerification();">
-                    <div class="otp-inputs-row">
-                        <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
-                        <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
+                    <div class="otp-inputs-row four-digits">
                         <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
                         <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
                         <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" />
@@ -314,6 +313,9 @@
                             </button>
                             <button id="btn-group-info" class="icon-button hidden" title="Group Information">
                                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </button>
+                            <button id="btn-delete-chat" class="icon-button btn-danger-icon" title="Clear / Delete Chat History" onclick="confirmDeleteChat()">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                             </button>
                         </div>
                     </header>
@@ -704,6 +706,25 @@
                 <h4 class="subheading">Members</h4>
                 <div id="group-info-members-list" class="modal-list-container">
                     <div class="modal-empty-hint">Loading members...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRM DELETE CHAT MODAL -->
+    <div id="modal-confirm-delete" class="modal-backdrop hidden">
+        <div class="modal-card modal-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">Clear Conversation?</h3>
+                <button class="btn-close-modal" onclick="closeModal('modal-confirm-delete')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.2rem;">
+                    Are you sure you want to permanently delete and clear all messages in this conversation? This cannot be undone.
+                </p>
+                <div class="modal-footer-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modal-confirm-delete')">Cancel</button>
+                    <button type="button" class="btn-danger" id="btn-execute-delete-chat" onclick="executeDeleteCurrentChat()">Clear Chat</button>
                 </div>
             </div>
         </div>

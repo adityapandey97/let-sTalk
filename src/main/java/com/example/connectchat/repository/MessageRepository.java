@@ -36,4 +36,12 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Message m SET m.status = :newStatus WHERE m.sender.id = :senderId AND m.receiver.id = :receiverId AND m.status <> com.example.connectchat.model.MessageStatus.READ")
     int markMessagesAsRead(@Param("senderId") Long senderId, @Param("receiverId") Long receiverId, @Param("newStatus") MessageStatus newStatus);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Message m WHERE (m.sender.id = :user1Id AND m.receiver.id = :user2Id) OR (m.sender.id = :user2Id AND m.receiver.id = :user1Id)")
+    int deleteConversationBetween(@Param("user1Id") Long user1Id, @Param("user2Id") Long user2Id);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Message m WHERE m.id = :messageId AND (m.sender.id = :userId OR m.receiver.id = :userId)")
+    int deleteSingleMessage(@Param("messageId") Long messageId, @Param("userId") Long userId);
 }

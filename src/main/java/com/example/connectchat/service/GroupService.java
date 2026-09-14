@@ -218,4 +218,53 @@ public class GroupService {
             .map(GroupMessageDto::fromEntity)
             .collect(Collectors.toList());
     }
+
+    @Transactional
+    public void deleteGroupMessages(Long groupId, Long userId) {
+        if (groupId == null || userId == null) {
+            throw new BadRequestException("Group ID and User ID are required");
+        }
+
+        boolean isMember = groupMemberRepository.existsByGroupIdAndUserId(groupId, userId);
+        if (!isMember) {
+            throw new UnauthorizedException("Unauthorized: You are not a member of this group");
+        }
+
+        groupMessageRepository.deleteByGroupId(groupId);
+
+        NotificationDto notif = new NotificationDto("GROUP_MESSAGES_CLEARED", "Group chat history cleared");
+        notif.setGroupId(groupId);
+        notif.setSenderId(userId);
+        messagingTemplate.convertAndSend("/topic/group/" + groupId, notif);
+    }
+
+    @Transactional
+    public void deleteGroupMessage(Long groupId, Long messageId, Long userId) {
+        if (groupId == null || messageId == null || userId == null) {
+            throw new BadRequestException("Group ID, Message ID, and User ID are required");
+        }
+
+        GroupMessage gm = groupMessageRepository.findById(messageId)
+            .orElseThrow(() -> new ResourceNotFoundException("Group message not found with id: " + messageId));
+
+        if (!gm.getGroup().getId().equals(groupId)) {
+            throw new BadRequestException("Message does not belong to the specified group");
+        }
+
+        if (!gm.getSender().getId().equals(userId)) {
+            ChatGroup group = chatGroupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
+            if (!group.getCreatedBy().getId().equals(userId)) {
+                throw new UnauthorizedException("You can only delete your own messages or you must be the group creator");
+            }
+        }
+
+        groupMessageRepository.delete(gm);
+
+        NotificationDto notif = new NotificationDto("GROUP_MESSAGE_DELETED", "Message deleted");
+        notif.setMessageId(messageId);
+        notif.setGroupId(groupId);
+        notif.setSenderId(userId);
+        messagingTemplate.convertAndSend("/topic/group/" + groupId, notif);
+    }
 }

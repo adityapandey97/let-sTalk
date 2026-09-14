@@ -19,4 +19,8 @@ public interface GroupMessageRepository extends JpaRepository<GroupMessage, Long
     default Optional<GroupMessage> findLastMessageInGroup(Long groupId) {
         return findFirstByGroupIdOrderBySentAtDesc(groupId);
     }
+
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true)
+    @Query("DELETE FROM GroupMessage gm WHERE gm.group.id = :groupId")
+    int deleteByGroupId(@Param("groupId") Long groupId);
 }

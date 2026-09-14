@@ -175,14 +175,14 @@ async function showOtpVerification(email, username) {
     
     const otpContainer = document.getElementById('otp-container');
     otpContainer.classList.remove('hidden');
-    document.getElementById('otp-target-email').textContent = email;
+    document.getElementById('otp-target-email').textContent = email || username;
 
     // Send OTP request to get simulation code for immediate testing
     try {
         const res = await fetch('/api/users/send-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email: email || username })
         });
         const data = await res.json();
         if (data.otp) {
@@ -202,7 +202,9 @@ function setupOtpInputHandling() {
     const inputs = document.querySelectorAll('.otp-digit');
     inputs.forEach((input, index) => {
         input.addEventListener('input', (e) => {
-            if (e.target.value.length === 1 && index < inputs.length - 1) {
+            // keep only digits
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            if (e.target.value.length >= 1 && index < inputs.length - 1) {
                 inputs[index + 1].focus();
             }
         });
@@ -213,12 +215,13 @@ function setupOtpInputHandling() {
         });
         input.addEventListener('paste', (e) => {
             e.preventDefault();
-            const pasteData = e.clipboardData.getData('text').trim();
-            if (pasteData.length === 6) {
+            const pasteData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').trim();
+            if (pasteData.length === 4) {
                 pasteData.split('').forEach((char, i) => {
                     if (inputs[i]) inputs[i].value = char;
                 });
-                inputs[5].focus();
+                inputs[3].focus();
+                submitOtpVerification();
             }
         });
     });
@@ -227,7 +230,7 @@ function setupOtpInputHandling() {
 function quickFillOtp() {
     const code = document.getElementById('demo-otp-code').textContent.trim();
     const inputs = document.querySelectorAll('.otp-digit');
-    if (code.length === 6) {
+    if (code.length === 4) {
         code.split('').forEach((char, i) => {
             if (inputs[i]) inputs[i].value = char;
         });
@@ -236,13 +239,13 @@ function quickFillOtp() {
 }
 
 async function submitOtpVerification() {
-    const email = document.getElementById('otp-target-email').textContent.trim();
+    const target = document.getElementById('otp-target-email').textContent.trim();
     const digits = Array.from(document.querySelectorAll('.otp-digit')).map(i => i.value).join('');
     const errBox = document.getElementById('otp-error');
     errBox.classList.add('hidden');
 
-    if (digits.length !== 6) {
-        errBox.textContent = 'Please enter the complete 6-digit code';
+    if (digits.length !== 4) {
+        errBox.textContent = 'Please enter the complete 4-digit verification code';
         errBox.classList.remove('hidden');
         return;
     }
@@ -251,12 +254,12 @@ async function submitOtpVerification() {
         const response = await fetch('/api/users/verify-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, code: digits })
+            body: JSON.stringify({ email: target, identifier: target, code: digits })
         });
 
         const user = await response.json();
         if (!response.ok) {
-            throw new Error(user.message || 'Invalid verification code');
+            throw new Error(user.message || 'Verification code does not match');
         }
 
         state.currentUser = user;
@@ -269,20 +272,25 @@ async function submitOtpVerification() {
 }
 
 async function resendOtp() {
-    const email = document.getElementById('otp-target-email').textContent.trim();
+    const target = document.getElementById('otp-target-email').textContent.trim();
+    const errBox = document.getElementById('otp-error');
+    errBox.classList.add('hidden');
     try {
         const res = await fetch('/api/users/send-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email: target, identifier: target })
         });
         const data = await res.json();
         if (data.otp) {
             document.getElementById('demo-otp-code').textContent = data.otp;
         }
-        alert('A new 6-digit verification code has been generated.');
+        const inputs = document.querySelectorAll('.otp-digit');
+        inputs.forEach(i => i.value = '');
+        if (inputs[0]) inputs[0].focus();
     } catch (e) {
-        alert('Could not resend OTP');
+        errBox.textContent = 'Could not resend OTP';
+        errBox.classList.remove('hidden');
     }
 }
 
@@ -292,11 +300,32 @@ function cancelOtp() {
     switchAuthTab('login');
 }
 
-// Sign In
+// Sign In with 4-Digit OTP
+async function handleLoginWithOtp() {
+    const identifier = document.getElementById('login-identifier').value.trim();
+    const errBox = document.getElementById('login-error');
+    errBox.classList.add('hidden');
+
+    if (!identifier) {
+        errBox.textContent = 'Please enter your email or username first';
+        errBox.classList.remove('hidden');
+        return;
+    }
+
+    showOtpVerification(identifier, identifier);
+}
+
+// Quick Sign In
 async function handleLogin() {
     const identifier = document.getElementById('login-identifier').value.trim();
     const errBox = document.getElementById('login-error');
     errBox.classList.add('hidden');
+
+    if (!identifier) {
+        errBox.textContent = 'Please enter your email or username';
+        errBox.classList.remove('hidden');
+        return;
+    }
 
     try {
         const response = await fetch('/api/users/login', {
@@ -1032,9 +1061,15 @@ function renderMessageBubble(msg) {
     }
 
     const showSender = state.activeChat && state.activeChat.type === 'group' && !isSentByMe;
+    const canDelete = isSentByMe || (state.activeChat && state.activeChat.type === 'group' && state.activeChat.creatorId === state.currentUser.id);
 
     return `
-        <div class="msg-row ${isSentByMe ? 'sent' : 'received'}">
+        <div class="msg-row ${isSentByMe ? 'sent' : 'received'}" id="msg-bubble-${msg.id}">
+            ${!isSentByMe && canDelete ? `
+                <button type="button" class="btn-delete-msg" onclick="deleteSingleMessage(${msg.id}, event)" title="Delete Message">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+            ` : ''}
             <div class="msg-bubble">
                 ${showSender ? `<div class="msg-sender-name">${escapeHtml(msg.senderFullName || msg.senderUsername)}</div>` : ''}
                 ${contentHtml}
@@ -1043,6 +1078,11 @@ function renderMessageBubble(msg) {
                     ${isSentByMe ? renderStatusTicks(msg.status) : ''}
                 </div>
             </div>
+            ${isSentByMe ? `
+                <button type="button" class="btn-delete-msg" onclick="deleteSingleMessage(${msg.id}, event)" title="Delete Message">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+            ` : ''}
         </div>
     `;
 }
@@ -1083,12 +1123,81 @@ function sendMessage() {
     input.value = '';
 }
 
+// Delete / Clear Entire Chat History
+function confirmDeleteChat() {
+    if (!state.activeChat) return;
+    openModal('modal-confirm-delete');
+}
+
+async function executeDeleteCurrentChat() {
+    if (!state.activeChat || !state.currentUser) return;
+    closeModal('modal-confirm-delete');
+
+    try {
+        if (state.activeChat.type === 'direct') {
+            const res = await fetch(`/api/messages/private?userId=${state.currentUser.id}&otherUserId=${state.activeChat.id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                const container = document.getElementById('messages-container');
+                if (container) container.innerHTML = '<div class="list-empty-hint">Chat history cleared</div>';
+                loadConnections();
+            }
+        } else if (state.activeChat.type === 'group') {
+            const res = await fetch(`/api/groups/${state.activeChat.id}/messages?userId=${state.currentUser.id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                const container = document.getElementById('messages-container');
+                if (container) container.innerHTML = '<div class="list-empty-hint">Group chat history cleared</div>';
+                loadGroups();
+            }
+        }
+    } catch (e) {
+        console.error('Error clearing chat:', e);
+    }
+}
+
+// Delete Single Message
+async function deleteSingleMessage(messageId, event) {
+    if (event) event.stopPropagation();
+    if (!confirm('Delete this message?')) return;
+
+    try {
+        if (state.activeChat && state.activeChat.type === 'direct') {
+            const res = await fetch(`/api/messages/${messageId}?userId=${state.currentUser.id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                const bubble = document.getElementById(`msg-bubble-${messageId}`);
+                if (bubble) bubble.remove();
+                loadConnections();
+            }
+        } else if (state.activeChat && state.activeChat.type === 'group') {
+            const res = await fetch(`/api/groups/${state.activeChat.id}/messages/${messageId}?userId=${state.currentUser.id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                const bubble = document.getElementById(`msg-bubble-${messageId}`);
+                if (bubble) bubble.remove();
+                loadGroups();
+            }
+        }
+    } catch (e) {
+        console.error('Error deleting message:', e);
+    }
+}
+
 // Incoming Message Handlers
 function handleIncomingPrivateMessage(msg) {
     if (state.activeChat && state.activeChat.type === 'direct' &&
         (state.activeChat.id === msg.senderId || state.activeChat.id === msg.receiverId)) {
         
         const container = document.getElementById('messages-container');
+        // Remove empty hint if present
+        const emptyHint = container.querySelector('.list-empty-hint');
+        if (emptyHint) emptyHint.remove();
+
         container.insertAdjacentHTML('beforeend', renderMessageBubble(msg));
         container.scrollTop = container.scrollHeight;
 
@@ -1107,6 +1216,9 @@ function handleIncomingPrivateMessage(msg) {
 function handleIncomingGroupMessage(msg) {
     if (state.activeChat && state.activeChat.type === 'group' && state.activeChat.id === msg.groupId) {
         const container = document.getElementById('messages-container');
+        const emptyHint = container.querySelector('.list-empty-hint');
+        if (emptyHint) emptyHint.remove();
+
         container.insertAdjacentHTML('beforeend', renderMessageBubble(msg));
         container.scrollTop = container.scrollHeight;
     }
@@ -1119,6 +1231,41 @@ function handleIncomingNotification(notif) {
         loadPendingRequests();
     } else if (notif.type === 'GROUP_CREATED') {
         loadGroups();
+    } else if (notif.type === 'CONVERSATION_CLEARED') {
+        if (state.activeChat && state.activeChat.type === 'direct' &&
+            (state.activeChat.id === notif.senderId || state.currentUser.id === notif.senderId)) {
+            const container = document.getElementById('messages-container');
+            if (container) container.innerHTML = '<div class="list-empty-hint">Chat history cleared</div>';
+        }
+        loadConnections();
+    } else if (notif.type === 'MESSAGE_DELETED') {
+        if (notif.messageId) {
+            const bubble = document.getElementById(`msg-bubble-${notif.messageId}`);
+            if (bubble) bubble.remove();
+        }
+        loadConnections();
+    } else if (notif.type === 'GROUP_MESSAGES_CLEARED') {
+        if (state.activeChat && state.activeChat.type === 'group' && state.activeChat.id === notif.groupId) {
+            const container = document.getElementById('messages-container');
+            if (container) container.innerHTML = '<div class="list-empty-hint">Group chat history cleared</div>';
+        }
+        loadGroups();
+    } else if (notif.type === 'GROUP_MESSAGE_DELETED') {
+        if (notif.messageId) {
+            const bubble = document.getElementById(`msg-bubble-${notif.messageId}`);
+            if (bubble) bubble.remove();
+        }
+        loadGroups();
+    } else if (notif.type === 'MESSAGE_READ' || notif.type === 'MESSAGE_STATUS_UPDATE') {
+        if (state.activeChat && state.activeChat.type === 'direct' && state.activeChat.id === notif.senderId) {
+            // Update all sent ticks to read (blue ticks)
+            const ticks = document.querySelectorAll('.msg-row.sent .status-ticks');
+            ticks.forEach(t => {
+                t.textContent = '✓✓';
+                t.style.color = '#38bdf8';
+            });
+        }
+        loadConnections();
     }
 }
 

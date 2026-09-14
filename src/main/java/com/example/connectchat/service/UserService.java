@@ -76,7 +76,7 @@ public class UserService {
             request.getBgWallpaper()
         );
 
-        // Generate 6-digit verification code
+        // Generate 4-digit verification code
         String otp = generateOtpCode();
         user.setVerificationCode(otp);
         user.setCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
@@ -89,14 +89,14 @@ public class UserService {
     }
 
     @Transactional
-    public String sendVerificationOtp(String email) {
-        if (email == null || email.trim().isEmpty()) {
-            throw new BadRequestException("Email is required");
+    public String sendVerificationOtp(String identifier) {
+        if (identifier == null || identifier.trim().isEmpty()) {
+            throw new BadRequestException("Email or username is required");
         }
 
-        String sanitizedEmail = email.trim().toLowerCase();
-        User user = userRepository.findByEmail(sanitizedEmail)
-            .orElseThrow(() -> new ResourceNotFoundException("No account found with email: " + sanitizedEmail));
+        String sanitized = identifier.trim().toLowerCase();
+        User user = userRepository.findByUsernameOrEmail(sanitized)
+            .orElseThrow(() -> new ResourceNotFoundException("No account found with email or username: " + sanitized));
 
         String otp = generateOtpCode();
         user.setVerificationCode(otp);
@@ -108,16 +108,17 @@ public class UserService {
 
     @Transactional
     public UserDto verifyOtp(VerifyOtpRequest request) {
-        if (request.getEmail() == null || request.getCode() == null) {
-            throw new BadRequestException("Email and verification code are required");
+        String identifier = request.getIdentifier();
+        if (identifier == null || identifier.trim().isEmpty() || request.getCode() == null || request.getCode().trim().isEmpty()) {
+            throw new BadRequestException("Email/username and 4-digit verification code are required");
         }
 
-        String sanitizedEmail = request.getEmail().trim().toLowerCase();
-        User user = userRepository.findByEmail(sanitizedEmail)
-            .orElseThrow(() -> new ResourceNotFoundException("No account found with email: " + sanitizedEmail));
+        String sanitized = identifier.trim().toLowerCase();
+        User user = userRepository.findByUsernameOrEmail(sanitized)
+            .orElseThrow(() -> new ResourceNotFoundException("No account found with: " + sanitized));
 
         if (user.getVerificationCode() == null || !user.getVerificationCode().equals(request.getCode().trim())) {
-            throw new BadRequestException("Invalid verification code. Please try again.");
+            throw new BadRequestException("Verification code does not match. Please try again.");
         }
 
         if (user.getCodeExpiresAt() != null && user.getCodeExpiresAt().isBefore(LocalDateTime.now())) {
@@ -251,7 +252,7 @@ public class UserService {
     }
 
     private String generateOtpCode() {
-        int code = 100000 + RANDOM.nextInt(900000);
+        int code = 1000 + RANDOM.nextInt(9000);
         return String.valueOf(code);
     }
 }

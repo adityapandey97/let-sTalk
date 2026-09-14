@@ -11,6 +11,7 @@ public class NotificationDto {
     private Long messageId;
     private String messageStatus;
     private String message;
+    private Long groupId;
     private LocalDateTime timestamp;
 
     public NotificationDto() {
@@ -85,6 +86,14 @@ public class NotificationDto {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 
     public LocalDateTime getTimestamp() {
