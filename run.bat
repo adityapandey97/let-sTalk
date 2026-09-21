@@ -1,6 +1,6 @@
 @echo off
 setlocal
-title Let's Talk - Real-Time Messaging & Media Application
+title Let's Talk - Real-Time Messaging & Calling Platform
 
 echo =======================================================
 echo          Starting Let's Talk Application
@@ -22,12 +22,13 @@ echo [INFO] Starting Spring Boot server on http://localhost:8080 ...
 echo [INFO] (Press Ctrl+C to stop the server)
 echo.
 
-call "%~dp0mvnw.cmd" spring-boot:run
+cd "%~dp0backend"
+call "%~dp0backend\mvnw.cmd" spring-boot:run
 
 if %errorlevel% neq 0 (
     echo.
     echo [ERROR] Application failed to start.
-    echo Please check if MySQL is running on localhost:3306 or configure application.properties.
+    echo Please check if port 8080 is available.
     echo.
 )
 

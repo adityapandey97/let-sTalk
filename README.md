@@ -1,74 +1,139 @@
-# Let's Talk – Real-Time Messaging & Media Application
+# Let's Talk – Real-Time Messaging, Media & Calling Platform
 
-**Let's Talk** is a feature-packed real-time messaging and social web application built with **Spring Boot 3**, **Spring Data JPA**, **WebSocket (STOMP + SockJS)**, **H2 / MySQL**, and pure **HTML5, CSS3, and Vanilla JavaScript**.
+**Let's Talk** is a modern, full-stack real-time social communication platform supporting text messaging, rich media sharing (photos, videos, documents/files, contact cards), in-browser voice note recording, 24-hour status stories, WhatsApp-style read receipts, and **1-to-1 WebRTC Voice & Video Calling**.
 
-It supports unique verified email login, 24-hour status stories, voice note audio recording & playback, rich media sharing (photos, videos, contact cards), WhatsApp-style read receipts, customizable profile avatars & chat wallpapers, and group chats.
+The project is cleanly decoupled into two independent directories for local development and cloud deployment:
+- **`backend/`**: Spring Boot 3 REST API + WebSocket STOMP server (Java 17+, JPA, H2/MySQL, Dockerfile)
+- **`frontend/`**: Modern Single Page Application (HTML5, CSS3 glassmorphism design system, Vanilla JS ES6+)
 
 ---
 
 ## 🌟 Key Features
 
-1. **Unique Email/Handle Login & 4-Digit OTP Verification**:
-   - Register with Full Name, Unique Username, and Unique Email.
-   - Built-in secure random **4-digit OTP verification code** workflow.
-   - Fast login via registered email address or username handle with 4-digit OTP verification.
-   - Exact match verification security (`"Verification code does not match"` error feedback).
+### 1. 📁 Rich File & Document Sharing
+- Send documents and attachments: PDF, DOCX, XLSX, PPT, ZIP, RAR, TXT, code files, and more.
+- Color-coded file extension badges (e.g., Red for PDF, Blue for DOC, Amber for ZIP).
+- File size formatting (KB/MB) and one-click direct download button.
+- Dedicated multipart upload endpoint (`/api/media/upload`) supporting files up to 50MB.
 
-2. **Delete / Clear Chat Management**:
-   - 🗑️ **Clear Conversation**: 1-click option in chat header to clear the entire chat history between users or in groups.
-   - 💬 **Delete Individual Messages**: Hover action button on any message bubble to delete specific messages in real-time.
-   - ⚡ **Real-Time Sync**: Instant WebSocket broadcasting to update both conversation viewports when messages/chats are cleared.
+### 2. 🎥 Video Messaging
+- Upload and stream MP4, WebM, and other video formats.
+- Inline responsive HTML5 video player embedded directly in chat bubbles with timeline controls.
+- Integrated video download button in every video bubble.
+- Upload progress banner showing live upload states.
 
-3. **24-Hour Stories & Status**:
-   - Post photo stories with captions or vibrant text statuses with custom color gradient palettes.
-   - Real-time active status rings around user avatars.
-   - Instagram/WhatsApp-style full-screen story viewer with auto-advancing progress timers, slide navigation, and direct reply-to-chat.
+### 3. 📞 WebRTC 1-to-1 Voice & Video Calling
+- Instant 1-to-1 Voice Call and Video Call buttons directly in direct chat headers.
+- Real-time signaling via WebSocket STOMP (`/app/call.signal` and `/topic/user/{id}/call`).
+- Incoming call ringing modal with caller avatar, name, and Accept / Decline options.
+- Active call overlay with:
+  - Remote video stream (fullscreen)
+  - Picture-in-picture local video preview (PiP)
+  - Audio visualizer pulsation waves for voice calls
+  - Live call duration timer (`MM:SS`)
+  - In-call controls: Mute/Unmute microphone, Turn camera on/off, and Hang up.
+- NAT traversal supported via public Google STUN servers.
 
-4. **Rich Media Messaging**:
-   - 🖼️ **Send Images**: Inline photo thumbnails with a full-screen Lightbox image viewer.
-   - 🎙️ **Voice Notes**: In-browser audio recording via `MediaRecorder` with live recording timer, wave visualizer, and custom inline playback controls.
-   - 🎥 **Send Videos**: Video player embedded directly inside message bubbles.
-   - 👤 **Send Contact Cards**: Share contacts with friends with 1-click connect/chat action.
+### 4. 🗑️ Delete Message & Chat Management
+- **Delete Single Messages**: Hover trash action on any message bubble with confirmation modal ("Delete for Everyone").
+- **Clear Entire Conversation**: 1-click option in chat header to clear the entire chat history.
+- **Transactional & Real-Time**: `@Transactional` database persistence and instant WebSocket notifications (`MESSAGE_DELETED`, `CONVERSATION_CLEARED`) sync immediately across both devices without page reloads.
 
-5. **Profile & Wallpaper Customization**:
-   - Custom profile pictures (custom image upload or stylish 3D avatar presets).
-   - Bio & status updates.
-   - 5 beautiful chat background wallpaper themes (Default Glass, Midnight Blue, Synth Sunset, Emerald Glow, Dark Doodles).
+### 5. ⏳ 24-Hour Stories & Status
+- Post photo stories with captions or gradient text status updates.
+- Real-time active status rings around user avatars.
+- WhatsApp/Instagram-style story viewer with progress bar timers, pause/play, and direct reply-to-chat.
 
-6. **Private & Group Real-Time Chat**:
-   - WebSocket STOMP for sub-millisecond message delivery.
-   - WhatsApp-style single/double checkmark delivery and read status receipts.
-   - Multi-user group conversations with member management.
+### 6. 🎙️ Voice Notes
+- In-browser audio recording via `MediaRecorder` API.
+- Live recording waveform visualizer, recording timer, and cancel/send actions.
+- Custom inline voice player with scrubber and duration display.
 
----
-
-## 📋 Prerequisites
-
-1. **Java Development Kit (JDK 17 or higher)**
-   - Download: [Adoptium Eclipse Temurin JDK 17](https://adoptium.net/) or [Oracle JDK](https://www.oracle.com/java/technologies/downloads/)
-   - Verify installation:
-     ```bash
-     java -version
-     ```
-
-2. **Web Browser**
-   - Google Chrome, Microsoft Edge, Mozilla Firefox, or Brave.
+### 7. 👥 Private & Group Conversations
+- Sub-millisecond message delivery via STOMP over WebSocket.
+- Delivery and read receipts (single checkmark, double checkmarks, blue read ticks).
+- Group chats with member lists and multi-user broadcast.
 
 ---
 
-## 🏃 Running the Application
+## 📁 Repository Structure
 
-### Method 1: Using One-Click Batch Script (Windows)
-Double-click `run.bat` in the project root directory.
+```
+New folder/
+├── backend/                  # Spring Boot 3 Backend Server
+│   ├── src/
+│   │   ├── main/java/com/example/connectchat/
+│   │   │   ├── config/      # WebSocket, WebMvc, CORS configurations
+│   │   │   ├── controller/  # REST & WebSocket STOMP Controllers (Media, Call, User, Chat, Story)
+│   │   │   ├── dto/         # DTOs (CallSignalDto, NotificationDto, MessageDto)
+│   │   │   ├── model/       # JPA Entities (User, Message, GroupMessage, Story)
+│   │   │   ├── repository/  # Spring Data JPA Repositories
+│   │   │   └── service/     # Business logic & transactional services
+│   │   └── main/resources/  # application.properties & static assets
+│   ├── uploads/             # Persistent directory for uploaded files and videos
+│   ├── Dockerfile           # Multi-stage Docker build file
+│   ├── pom.xml              # Maven dependencies & build plugins
+│   └── mvnw & mvnw.cmd      # Maven wrappers
+│
+├── frontend/                 # Decoupled Single Page Web Application
+│   ├── css/
+│   │   └── style.css        # Glassmorphism UI tokens, call overlay, file bubbles
+│   ├── js/
+│   │   ├── app.js           # Core client logic, WebRTC call engine, chat handlers
+│   │   └── config.js        # Dynamic backend API & WebSocket base URL config
+│   ├── index.html           # Semantic HTML5 layout with accessible modals
+│   └── package.json         # Optional local dev server script
+│
+├── run.bat                   # 1-Click launcher to start backend & open app
+├── run-backend.bat           # Run backend server standalone
+├── run-frontend.bat          # Run frontend server standalone
+└── README.md
+```
 
-### Method 2: Using Maven Wrapper Terminal Command
+---
+
+## 🏃 Running the Application Locally
+
+### Method 1: One-Click Launch (Windows)
+Double-click **`run.bat`** in the project root.
+- Starts the Spring Boot backend on **http://localhost:8080**
+- Opens your browser to **http://localhost:8080**
+
+### Method 2: Running Frontend & Backend Separately
+
+**Step 1: Start Backend**
 ```bash
-./mvnw spring-boot:run
+cd backend
+mvnw.cmd spring-boot:run
 ```
-*(On Windows Command Prompt: `mvnw.cmd spring-boot:run`)*
+*(Backend runs on `http://localhost:8080` with H2 console at `/h2-console`)*
 
-### Accessing the Web Application
-Open your browser and navigate to:
+**Step 2: Start Frontend**
+```bash
+cd frontend
+npm start
+# OR double click run-frontend.bat
 ```
-http://localhost:8080
-```
+*(Frontend runs on `http://localhost:3000` and communicates with the backend via CORS)*
+
+---
+
+## 🚢 Cloud Deployment Guide
+
+### Deploying Backend
+The backend is packaged with a production-ready `backend/Dockerfile` and Maven build.
+- **Render / Railway / Fly.io / Heroku**:
+  1. Point the service root to the `backend` folder.
+  2. Build command: `./mvnw clean package -DskipTests`
+  3. Run command: `java -jar target/letstalk-1.0.0.jar`
+  4. Port: `8080`
+
+### Deploying Frontend
+The frontend is a static single-page app and can be deployed anywhere for free:
+- **Vercel / Netlify / Cloudflare Pages / GitHub Pages**:
+  1. Set the publish directory to `frontend`.
+  2. Open `frontend/js/config.js` and set:
+     ```javascript
+     API_BASE_URL: 'https://your-deployed-backend.onrender.com'
+     ```
+  3. Deploy! The frontend will connect to your cloud backend automatically.
