@@ -42,13 +42,23 @@ const state = {
         micMuted: false,
         videoMuted: false
     },
-    selectedAvatar: '👨‍💻',
+    selectedAvatar: 'images/avatar_alex.jpg',
     selectedWallpaper: 'default'
 };
 
 let pendingDeleteMessageId = null;
 
-const AVATAR_PRESETS = ['👨‍💻', '👩‍💻', '🚀', '🌟', '🎨', '🎧', '⚡', '🐱', '🦊'];
+const AVATAR_PRESETS = [
+    { type: 'image', src: 'images/avatar_alex.jpg', label: 'Alex' },
+    { type: 'image', src: 'images/avatar_sarah.jpg', label: 'Sarah' },
+    { type: 'image', src: 'images/avatar_david.jpg', label: 'David' },
+    { type: 'image', src: 'images/avatar_maya.jpg', label: 'Maya' },
+    { type: 'emoji', value: '👨‍💻' },
+    { type: 'emoji', value: '👩‍💻' },
+    { type: 'emoji', value: '🚀' },
+    { type: 'emoji', value: '🎨' },
+    { type: 'emoji', value: '⚡' }
+];
 
 // =============================================================================
 // 1. INITIALIZATION & AUTHENTICATION
@@ -64,21 +74,28 @@ function initAvatarPresets() {
     const regContainer = document.getElementById('reg-avatar-presets');
     const editContainer = document.getElementById('edit-avatar-presets');
     
-    if (regContainer) {
-        regContainer.innerHTML = AVATAR_PRESETS.map((emoji, idx) => `
-            <button type="button" class="preset-avatar-btn ${idx === 0 ? 'active' : ''}" onclick="selectPresetAvatar('${emoji}', this, 'reg')">${emoji}</button>
-        `).join('');
-    }
-    
-    if (editContainer) {
-        editContainer.innerHTML = AVATAR_PRESETS.map((emoji) => `
-            <button type="button" class="preset-avatar-btn" onclick="selectPresetAvatar('${emoji}', this, 'edit')">${emoji}</button>
-        `).join('');
-    }
+    const renderList = (container, ctx) => {
+        if (!container) return;
+        container.innerHTML = AVATAR_PRESETS.map((p, idx) => {
+            if (p.type === 'image') {
+                return `
+                    <button type="button" class="preset-avatar-btn preset-avatar-img ${idx === 0 ? 'active' : ''}" onclick="selectPresetAvatar('${p.src}', this, '${ctx}')" title="${p.label}">
+                        <img src="${p.src}" alt="${p.label}" />
+                    </button>
+                `;
+            }
+            return `
+                <button type="button" class="preset-avatar-btn" onclick="selectPresetAvatar('${p.value}', this, '${ctx}')">${p.value}</button>
+            `;
+        }).join('');
+    };
+
+    renderList(regContainer, 'reg');
+    renderList(editContainer, 'edit');
 }
 
-function selectPresetAvatar(emoji, element, context) {
-    state.selectedAvatar = emoji;
+function selectPresetAvatar(val, element, context) {
+    state.selectedAvatar = val;
     const container = document.getElementById(`${context}-avatar-presets`);
     if (container) {
         container.querySelectorAll('.preset-avatar-btn').forEach(btn => btn.classList.remove('active'));
@@ -87,8 +104,22 @@ function selectPresetAvatar(emoji, element, context) {
     
     const preview = document.getElementById(`${context}-avatar-preview`);
     if (preview) {
-        preview.innerHTML = `<span>${emoji}</span>`;
+        if (val.startsWith('images/') || val.startsWith('/images/') || val.startsWith('http') || val.startsWith('data:image')) {
+            preview.innerHTML = `<img src="${val}" alt="Avatar" />`;
+        } else {
+            preview.innerHTML = `<span>${val}</span>`;
+        }
     }
+}
+
+// 1-Click Quick Demo Sign-In helper
+async function quickLogin(identifier, password) {
+    switchAuthTab('login');
+    const idInput = document.getElementById('login-identifier');
+    const pwdInput = document.getElementById('login-password');
+    if (idInput) idInput.value = identifier;
+    if (pwdInput) pwdInput.value = password;
+    await handleLogin();
 }
 
 function handleAvatarFileSelect(input, context) {
@@ -288,7 +319,7 @@ async function handleRegister() {
     }
 
     try {
-        const response = await fetch(window.getApiUrl(''), {
+        const response = await fetch(window.getApiUrl('/api/users'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -337,7 +368,7 @@ async function handleLogin() {
     }
 
     try {
-        const response = await fetch(window.getApiUrl(''), {
+        const response = await fetch(window.getApiUrl('/api/users/login'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -426,12 +457,10 @@ function updateCurrentUserUI() {
 
 function renderAvatarInto(avatarData, name, element) {
     if (!element) return;
-    if (avatarData && avatarData.startsWith('data:image')) {
-        element.innerHTML = `<img src="${avatarData}" alt="${name}" />`;
+    if (avatarData && (avatarData.startsWith('data:image') || avatarData.startsWith('http') || avatarData.startsWith('images/') || avatarData.startsWith('/images/'))) {
+        element.innerHTML = `<img src="${avatarData}" alt="${escapeHtml(name || '')}" />`;
     } else if (avatarData && avatarData.length <= 4) {
         element.innerHTML = `<span>${avatarData}</span>`;
-    } else if (avatarData && avatarData.startsWith('http')) {
-        element.innerHTML = `<img src="${avatarData}" alt="${name}" />`;
     } else {
         const initial = (name && name.length > 0) ? name.charAt(0).toUpperCase() : '?';
         element.innerHTML = `<span>${initial}</span>`;
@@ -579,12 +608,10 @@ function renderStoriesTray(stories) {
 }
 
 function getAvatarHtml(avatarData, name) {
-    if (avatarData && avatarData.startsWith('data:image')) {
-        return `<img src="${avatarData}" alt="${escapeHtml(name)}" />`;
+    if (avatarData && (avatarData.startsWith('data:image') || avatarData.startsWith('http') || avatarData.startsWith('images/') || avatarData.startsWith('/images/'))) {
+        return `<img src="${avatarData}" alt="${escapeHtml(name || '')}" />`;
     } else if (avatarData && avatarData.length <= 4) {
         return `<span>${avatarData}</span>`;
-    } else if (avatarData && avatarData.startsWith('http')) {
-        return `<img src="${avatarData}" alt="${escapeHtml(name)}" />`;
     }
     const initial = (name && name.length > 0) ? name.charAt(0).toUpperCase() : '?';
     return `<span>${initial}</span>`;
@@ -667,7 +694,7 @@ async function submitStory(type) {
     }
 
     try {
-        const res = await fetch(window.getApiUrl(''), {
+        const res = await fetch(window.getApiUrl('/api/stories'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -811,7 +838,7 @@ async function deleteCurrentStory() {
     if (!confirm('Are you sure you want to delete this story?')) return;
 
     try {
-        await fetch(window.getApiUrl(`/api/stories/${story.id}?userId=${state.currentUser.id}`, { method: 'DELETE' });
+        await fetch(window.getApiUrl(`/api/stories/${story.id}?userId=${state.currentUser.id}`), { method: 'DELETE' });
         closeStoryViewer();
         loadStoriesFeed();
     } catch (e) {
@@ -840,7 +867,7 @@ function sendStoryReply() {
     }
 
     input.value = '';
-    alert(`Reply sent to ${group.fullName}!`));
+    alert(`Reply sent to ${group.fullName}!`);
 }
 
 // =========================================================================
@@ -1742,7 +1769,7 @@ async function saveProfileSettings() {
     const bio = document.getElementById('edit-bio').value.trim();
 
     try {
-        const res = await fetch(window.getApiUrl(`/api/users/${state.currentUser.id}/profile`, {
+        const res = await fetch(window.getApiUrl(`/api/users/${state.currentUser.id}/profile`), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1823,7 +1850,7 @@ async function searchUsers(query) {
 
 async function sendConnectionRequest(targetUserId) {
     try {
-        const res = await fetch(window.getApiUrl(''), {
+        const res = await fetch(window.getApiUrl('/api/connections/request'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1927,7 +1954,7 @@ function openCreateGroupModal() {
                 <div class="conv-last-msg">@${escapeHtml(c.user.username)}</div>
             </div>
         </label>
-    `)).join('');
+    `).join('');
 }
 
 async function submitCreateGroup() {
@@ -1937,7 +1964,7 @@ async function submitCreateGroup() {
     if (!name) return;
 
     try {
-        const res = await fetch(window.getApiUrl(''), {
+        const res = await fetch(window.getApiUrl('/api/groups'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

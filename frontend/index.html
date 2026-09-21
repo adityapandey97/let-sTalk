@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2.1">
 </head>
 <body>
     <div class="app-background">
@@ -20,129 +20,261 @@
     <!-- =========================================================================
          1. AUTHENTICATION / ONBOARDING SCREEN
          ========================================================================= -->
+    <!-- =========================================================================
+         1. AUTHENTICATION / ONBOARDING SCREEN (SPLIT SHOWCASE)
+         ========================================================================= -->
     <div id="auth-screen" class="screen-view">
-        <main class="auth-card">
-            <div class="brand-badge">
-                <div class="brand-icon">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                    </svg>
-                </div>
-                <h1 class="brand-title">Let's Talk</h1>
-            </div>
+        <div class="auth-split-wrapper">
             
-            <p class="brand-tagline">Connect instantly with rich stories, voice notes, and media sharing.</p>
-
-            <!-- Auth Mode Switcher Tabs -->
-            <div class="auth-tabs" role="tablist">
-                <button type="button" id="tab-btn-register" class="auth-tab active" onclick="switchAuthTab('register')">Create Account</button>
-                <button type="button" id="tab-btn-login" class="auth-tab" onclick="switchAuthTab('login')">Sign In</button>
-            </div>
-
-            <!-- REGISTER FORM -->
-            <form id="register-form" class="form-container" onsubmit="event.preventDefault(); handleRegister();">
-                <div class="form-group">
-                    <label for="reg-fullname" class="form-label">Full Name <span class="required">*</span></label>
-                    <input type="text" id="reg-fullname" class="form-control" placeholder="e.g. Alex Johnson" required maxlength="60" autocomplete="name" />
+            <!-- LEFT HERO & ARCHITECTURE SHOWCASE PANEL -->
+            <aside class="auth-hero-panel">
+                <div class="hero-top-badge">
+                    <span class="pulse-icon">⚡</span>
+                    <span>Next-Gen Unified Communications</span>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="reg-username" class="form-label">Username <span class="required">*</span></label>
-                        <div class="input-with-status">
-                            <span class="input-prefix">@</span>
-                            <input type="text" id="reg-username" class="form-control has-prefix" placeholder="alex_99" required maxlength="30" autocomplete="username" />
-                            <span id="username-status-icon" class="status-icon"></span>
-                        </div>
-                        <div id="username-hint" class="field-feedback"></div>
-                    </div>
+                <div class="hero-header-content">
+                    <h2 class="hero-headline">Instant Messaging, 4K Media &amp; HD Calling</h2>
+                    <p class="hero-description">
+                        Engineered for zero-latency peer-to-peer WebRTC audio/video calls, real-time Spring Boot STOMP messaging, ephemeral stories, and an encrypted 50MB media vault.
+                    </p>
+                </div>
 
-                    <div class="form-group">
-                        <label for="reg-email" class="form-label">Email Address <span class="required">*</span></label>
-                        <div class="input-with-status">
-                            <input type="email" id="reg-email" class="form-control" placeholder="alex@example.com" required maxlength="80" autocomplete="email" />
-                            <span id="email-status-icon" class="status-icon"></span>
-                        </div>
-                        <div id="email-hint" class="field-feedback"></div>
+                <!-- Hero Product Visual Card -->
+                <div class="hero-visual-card">
+                    <img src="images/lets_talk_hero.jpg" alt="Let's Talk Platform Interface Showcase" class="hero-preview-img" />
+                    <div class="hero-image-overlay">
+                        <span class="live-pill"><span class="status-dot"></span> Live Interface Preview</span>
+                        <span class="webrtc-pill">WebRTC 1080p Video + Spatial Audio</span>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="reg-password" class="form-label">Password <span class="required">*</span></label>
-                    <div class="input-with-status">
-                        <input type="password" id="reg-password" class="form-control has-toggle" placeholder="Create a secure password (min 4 characters)" required minlength="4" maxlength="64" autocomplete="new-password" />
-                        <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility('reg-password', this)" title="Show/Hide Password" aria-label="Toggle password visibility">
-                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            <svg class="eye-closed hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                <!-- Architecture Diagram Preview Card (Clickable) -->
+                <div class="hero-diagram-preview" onclick="openModal('modal-architecture-diagram')" role="button" tabindex="0" title="Click to open full Architecture Diagram">
+                    <div class="diagram-thumb-wrap">
+                        <img src="images/system_architecture_diagram.jpg" alt="System Architecture Diagram" class="diagram-mini-img" />
+                        <div class="diagram-zoom-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                            <span>Inspect Diagram</span>
+                        </div>
+                    </div>
+                    <div class="diagram-info-text">
+                        <div class="diagram-title-row">
+                            <h4>Full-Stack Architecture &amp; Data Pipeline</h4>
+                            <span class="badge-tech">STOMP + WebRTC</span>
+                        </div>
+                        <p>Spring Boot Broker &bull; ICE P2P Voice/Video &bull; REST Services &bull; Media Vault</p>
+                    </div>
+                </div>
+
+                <!-- System Highlights Grid -->
+                <div class="hero-features-grid">
+                    <div class="feature-chip">
+                        <span class="chip-icon">⚡</span>
+                        <div class="chip-text">
+                            <strong>STOMP Messaging</strong>
+                            <span>Instant pub/sub delivery</span>
+                        </div>
+                    </div>
+                    <div class="feature-chip">
+                        <span class="chip-icon">📹</span>
+                        <div class="chip-text">
+                            <strong>WebRTC P2P Calling</strong>
+                            <span>HD voice &amp; video engine</span>
+                        </div>
+                    </div>
+                    <div class="feature-chip">
+                        <span class="chip-icon">📁</span>
+                        <div class="chip-text">
+                            <strong>Media Vault</strong>
+                            <span>50MB docs, PDFs, videos</span>
+                        </div>
+                    </div>
+                    <div class="feature-chip">
+                        <span class="chip-icon">🔒</span>
+                        <div class="chip-text">
+                            <strong>Transactional DB</strong>
+                            <span>H2 persistence &amp; privacy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Health Status Bar -->
+                <div class="hero-status-footer">
+                    <span class="status-indicator-live"></span>
+                    <span>Backend Server Live &bull; STOMP Engine Ready &bull; Port 8080</span>
+                </div>
+            </aside>
+
+            <!-- RIGHT AUTHENTICATION CARD -->
+            <main class="auth-card">
+                <div class="brand-badge">
+                    <div class="brand-icon">
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="brand-title">Let's Talk</h1>
+                        <span class="brand-version-badge">v2.0 Professional</span>
+                    </div>
+                </div>
+                
+                <p class="brand-tagline">Welcome! Sign in or select a demo user to test live messaging and HD calling immediately.</p>
+
+                <!-- 1-Click Quick Demo Sign-In Selector -->
+                <div class="quick-demo-section">
+                    <div class="quick-demo-header">
+                        <span>⚡ 1-Click Quick Demo Sign-In</span>
+                        <span class="quick-demo-sub">Click any avatar to enter</span>
+                    </div>
+                    <div class="quick-demo-grid">
+                        <button type="button" class="quick-user-btn" onclick="quickLogin('alex_johnson', 'password123')" title="Sign in as Alex Johnson">
+                            <img src="images/avatar_alex.jpg" alt="Alex" class="quick-avatar" />
+                            <div class="quick-user-details">
+                                <span class="quick-name">Alex Johnson</span>
+                                <span class="quick-role">Lead Engineer</span>
+                            </div>
+                        </button>
+                        <button type="button" class="quick-user-btn" onclick="quickLogin('sarah_c', 'password123')" title="Sign in as Sarah Connor">
+                            <img src="images/avatar_sarah.jpg" alt="Sarah" class="quick-avatar" />
+                            <div class="quick-user-details">
+                                <span class="quick-name">Sarah Connor</span>
+                                <span class="quick-role">Product Lead</span>
+                            </div>
+                        </button>
+                        <button type="button" class="quick-user-btn" onclick="quickLogin('david_lee', 'password123')" title="Sign in as David Lee">
+                            <img src="images/avatar_david.jpg" alt="David" class="quick-avatar" />
+                            <div class="quick-user-details">
+                                <span class="quick-name">David Lee</span>
+                                <span class="quick-role">Core Dev</span>
+                            </div>
+                        </button>
+                        <button type="button" class="quick-user-btn" onclick="quickLogin('maya_p', 'password123')" title="Sign in as Maya Patel">
+                            <img src="images/avatar_maya.jpg" alt="Maya" class="quick-avatar" />
+                            <div class="quick-user-details">
+                                <span class="quick-name">Maya Patel</span>
+                                <span class="quick-role">UI/UX Designer</span>
+                            </div>
                         </button>
                     </div>
                 </div>
 
-                <!-- Avatar Selection & Preview -->
-                <div class="form-group">
-                    <label class="form-label">Profile Picture (Pick Avatar or Upload)</label>
-                    <div class="avatar-picker-row">
-                        <div class="avatar-preview-box" id="reg-avatar-preview">
-                            <span id="reg-avatar-text">👤</span>
+                <div class="auth-divider">
+                    <span>or sign in with your credentials</span>
+                </div>
+
+                <!-- Auth Mode Switcher Tabs -->
+                <div class="auth-tabs" role="tablist">
+                    <button type="button" id="tab-btn-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+                    <button type="button" id="tab-btn-register" class="auth-tab" onclick="switchAuthTab('register')">Create Account</button>
+                </div>
+
+                <!-- LOGIN FORM (Default active for seamless sign-in) -->
+                <form id="login-form" class="form-container" onsubmit="event.preventDefault(); handleLogin();">
+                    <div class="form-group">
+                        <label for="login-identifier" class="form-label">Email or Username <span class="required">*</span></label>
+                        <div class="input-with-status">
+                            <input type="text" id="login-identifier" class="form-control" placeholder="alex@example.com or alex_johnson" required autocomplete="username" />
                         </div>
-                        <div class="avatar-preset-list" id="reg-avatar-presets">
-                            <!-- Presets dynamically inserted -->
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password" class="form-label">Password <span class="required">*</span></label>
+                        <div class="input-with-status">
+                            <input type="password" id="login-password" class="form-control has-toggle" placeholder="Enter your password" required autocomplete="current-password" />
+                            <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility('login-password', this)" title="Show/Hide Password" aria-label="Toggle password visibility">
+                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-closed hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
                         </div>
-                        <label class="avatar-upload-label" for="reg-avatar-file">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                            <span>Upload</span>
-                            <input type="file" id="reg-avatar-file" accept="image/*" class="hidden-file-input" onchange="handleAvatarFileSelect(this, 'reg')" />
-                        </label>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="reg-bio" class="form-label">Bio / Status</label>
-                    <input type="text" id="reg-bio" class="form-control" placeholder="Hey there! I am using Let's Talk." maxlength="200" />
-                </div>
+                    <div id="login-error" class="error-banner hidden" role="alert"></div>
 
-                <div id="register-error" class="error-banner hidden" role="alert"></div>
+                    <button type="submit" id="btn-login" class="btn-primary" style="width: 100%;">
+                        <span>Sign In</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </form>
 
-                <button type="submit" id="btn-register" class="btn-primary">
-                    <span>Create Account</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </button>
-            </form>
-
-            <!-- LOGIN FORM -->
-            <form id="login-form" class="form-container hidden" onsubmit="event.preventDefault(); handleLogin();">
-                <div class="form-group">
-                    <label for="login-identifier" class="form-label">Email or Username <span class="required">*</span></label>
-                    <div class="input-with-status">
-                        <input type="text" id="login-identifier" class="form-control" placeholder="alex@example.com or alex_99" required autocomplete="username" />
+                <!-- REGISTER FORM -->
+                <form id="register-form" class="form-container hidden" onsubmit="event.preventDefault(); handleRegister();">
+                    <div class="form-group">
+                        <label for="reg-fullname" class="form-label">Full Name <span class="required">*</span></label>
+                        <input type="text" id="reg-fullname" class="form-control" placeholder="e.g. Elena Rostova" required maxlength="60" autocomplete="name" />
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="login-password" class="form-label">Password <span class="required">*</span></label>
-                    <div class="input-with-status">
-                        <input type="password" id="login-password" class="form-control has-toggle" placeholder="Enter your password" required autocomplete="current-password" />
-                        <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility('login-password', this)" title="Show/Hide Password" aria-label="Toggle password visibility">
-                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            <svg class="eye-closed hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                        </button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reg-username" class="form-label">Username <span class="required">*</span></label>
+                            <div class="input-with-status">
+                                <span class="input-prefix">@</span>
+                                <input type="text" id="reg-username" class="form-control has-prefix" placeholder="elena_r" required maxlength="30" autocomplete="username" />
+                                <span id="username-status-icon" class="status-icon"></span>
+                            </div>
+                            <div id="username-hint" class="field-feedback"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reg-email" class="form-label">Email Address <span class="required">*</span></label>
+                            <div class="input-with-status">
+                                <input type="email" id="reg-email" class="form-control" placeholder="elena@example.com" required maxlength="80" autocomplete="email" />
+                                <span id="email-status-icon" class="status-icon"></span>
+                            </div>
+                            <div id="email-hint" class="field-feedback"></div>
+                        </div>
                     </div>
-                </div>
 
-                <div id="login-error" class="error-banner hidden" role="alert"></div>
+                    <div class="form-group">
+                        <label for="reg-password" class="form-label">Password <span class="required">*</span></label>
+                        <div class="input-with-status">
+                            <input type="password" id="reg-password" class="form-control has-toggle" placeholder="Create a secure password (min 4 characters)" required minlength="4" maxlength="64" autocomplete="new-password" />
+                            <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility('reg-password', this)" title="Show/Hide Password" aria-label="Toggle password visibility">
+                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-closed hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
+                    </div>
 
-                <button type="submit" id="btn-login" class="btn-primary" style="width: 100%;">
-                    <span>Sign In</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </button>
-            </form>
-        </main>
+                    <!-- Avatar Selection & Preview with Realistic Photos -->
+                    <div class="form-group">
+                        <label class="form-label">Profile Picture (Pick Realistic Portrait, Icon or Upload)</label>
+                        <div class="avatar-picker-row">
+                            <div class="avatar-preview-box" id="reg-avatar-preview">
+                                <img src="images/avatar_alex.jpg" alt="Avatar Preview" />
+                            </div>
+                            <div class="avatar-preset-list" id="reg-avatar-presets">
+                                <!-- Presets dynamically inserted -->
+                            </div>
+                            <label class="avatar-upload-label" for="reg-avatar-file">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                <span>Upload</span>
+                                <input type="file" id="reg-avatar-file" accept="image/*" class="hidden-file-input" onchange="handleAvatarFileSelect(this, 'reg')" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-bio" class="form-label">Bio / Status</label>
+                        <input type="text" id="reg-bio" class="form-control" placeholder="Hey there! I am using Let's Talk." maxlength="200" />
+                    </div>
+
+                    <div id="register-error" class="error-banner hidden" role="alert"></div>
+
+                    <button type="submit" id="btn-register" class="btn-primary">
+                        <span>Create Account</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </form>
+            </main>
+        </div>
     </div>
 
     <!-- =========================================================================
@@ -163,9 +295,15 @@
                         </div>
                         <h2 class="sidebar-brand-name">Let's Talk</h2>
                     </div>
-                    <div id="connection-badge" class="connection-pill disconnected" title="WebSocket Status">
-                        <span class="status-dot"></span>
-                        <span class="status-label">Offline</span>
+                    <div style="display: flex; align-items: center; gap: 0.45rem;">
+                        <button type="button" class="btn-diagram-header" onclick="openModal('modal-architecture-diagram')" title="View System Architecture &amp; Data Pipeline Diagram">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                            <span class="btn-diagram-text">Architecture</span>
+                        </button>
+                        <div id="connection-badge" class="connection-pill disconnected" title="WebSocket Status">
+                            <span class="status-dot"></span>
+                            <span class="status-label">Offline</span>
+                        </div>
                     </div>
                 </div>
 
@@ -812,10 +950,73 @@
         </div>
     </div>
 
+    <!-- =========================================================================
+         SYSTEM ARCHITECTURE & FEATURES DIAGRAM MODAL
+         ========================================================================= -->
+    <div id="modal-architecture-diagram" class="modal-backdrop hidden" onclick="if(event.target === this) closeModal('modal-architecture-diagram')">
+        <div class="modal-card modal-large-diagram" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="brand-icon" style="width: 40px; height: 40px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    </div>
+                    <div>
+                        <h3 class="modal-title">System Architecture &amp; Data Pipeline</h3>
+                        <p class="modal-subtitle">Full-Stack Real-Time STOMP Messaging, WebRTC P2P Voice/Video &amp; Media Vault</p>
+                    </div>
+                </div>
+                <button class="btn-close-modal" onclick="closeModal('modal-architecture-diagram')">&times;</button>
+            </div>
+            
+            <div class="modal-body diagram-modal-body">
+                <!-- High-Resolution Infographic Diagram -->
+                <div class="diagram-image-container">
+                    <img src="images/system_architecture_diagram.jpg" alt="Let's Talk System Architecture Diagram" class="diagram-image-full" />
+                </div>
+                
+                <!-- Architecture Specifications Grid -->
+                <div class="architecture-grid">
+                    <div class="arch-card">
+                        <div class="arch-card-title">
+                            <span class="arch-tag ws">STOMP Broker</span>
+                            <span>WebSocket Real-Time Messaging</span>
+                        </div>
+                        <p>Spring Boot SimpleBroker with destinations <code>/app/chat.private</code>, <code>/app/chat.group</code>, and <code>/app/chat.status</code>. User subscriptions run over private queues <code>/topic/user/{id}/*</code> with live delivery confirmation ticks.</p>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-card-title">
+                            <span class="arch-tag rtc">WebRTC P2P</span>
+                            <span>HD Audio &amp; Video Engine</span>
+                        </div>
+                        <p>Direct peer-to-peer media streaming using Google STUN servers. Signaling exchanges SDP offers, answers, and ICE candidates via WebSocket destination <code>/app/call.signal</code> with integrated mic/camera mute controls.</p>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-card-title">
+                            <span class="arch-tag rest">REST Services</span>
+                            <span>Spring Boot MVC Backend</span>
+                        </div>
+                        <p>RESTful APIs managing user authentication, salted SHA-256 passwords, real-time user discovery, friend connection handshakes, and group chat creation with CORS support.</p>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-card-title">
+                            <span class="arch-tag vault">Media Storage</span>
+                            <span>Encrypted Media Vault</span>
+                        </div>
+                        <p>Dedicated upload controller at <code>/api/media/upload</code> accepting audio notes, 1080p videos (MP4/WebM), and documents (PDF/DOCX/ZIP) up to 50MB with UUID preservation and static serving at <code>/uploads/**</code>.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                <button type="button" class="btn-primary" onclick="closeModal('modal-architecture-diagram')" style="margin-left: auto;">Got it</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SockJS and STOMP CDNs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/config.js?v=2.1"></script>
+    <script src="js/app.js?v=2.1"></script>
 </body>
 </html>
