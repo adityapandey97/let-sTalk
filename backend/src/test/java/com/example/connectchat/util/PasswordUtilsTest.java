@@ -12,7 +12,7 @@ class PasswordUtilsTest {
         String hash = PasswordUtils.hashPassword(password);
 
         assertNotNull(hash);
-        assertTrue(hash.contains(":"));
+        assertTrue(hash.startsWith("$2a$") || hash.startsWith("$2b$") || hash.startsWith("$2y$"));
         assertTrue(PasswordUtils.verifyPassword(password, hash));
     }
 

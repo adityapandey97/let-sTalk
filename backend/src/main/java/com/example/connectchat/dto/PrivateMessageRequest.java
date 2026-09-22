@@ -9,6 +9,7 @@ public class PrivateMessageRequest {
     private MessageType messageType = MessageType.TEXT;
     private String mediaUrl;
     private String mediaMetadata;
+    private Long repliedMessageId;
 
     public PrivateMessageRequest() {
     }
@@ -68,5 +69,13 @@ public class PrivateMessageRequest {
 
     public void setMediaMetadata(String mediaMetadata) {
         this.mediaMetadata = mediaMetadata;
+    }
+
+    public Long getRepliedMessageId() {
+        return repliedMessageId;
+    }
+
+    public void setRepliedMessageId(Long repliedMessageId) {
+        this.repliedMessageId = repliedMessageId;
     }
 }

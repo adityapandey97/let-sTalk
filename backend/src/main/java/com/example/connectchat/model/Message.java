@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "messages", indexes = {
+    @Index(name = "idx_msg_conversation", columnList = "conversation_id"),
     @Index(name = "idx_msg_sender_receiver", columnList = "sender_id, receiver_id"),
     @Index(name = "idx_msg_sent_at", columnList = "sent_at"),
     @Index(name = "idx_msg_status", columnList = "status")
@@ -15,12 +16,16 @@ public class Message {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "conversation_id")
+    private Conversation conversation;
+
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "receiver_id", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "receiver_id")
     private User receiver;
 
     @Column(name = "content", length = 4000, columnDefinition = "TEXT")
@@ -36,6 +41,16 @@ public class Message {
     @Column(name = "media_metadata", columnDefinition = "TEXT")
     private String mediaMetadata;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "replied_message_id")
+    private Message repliedMessage;
+
+    @Column(name = "deleted_for_everyone", nullable = false)
+    private boolean deletedForEveryone = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Column(name = "sent_at", nullable = false)
     private LocalDateTime sentAt;
 
@@ -43,10 +58,14 @@ public class Message {
     @Column(name = "status", nullable = false, length = 20)
     private MessageStatus status;
 
+    @Column(name = "reactions", columnDefinition = "TEXT")
+    private String reactions;
+
     public Message() {
     }
 
-    public Message(User sender, User receiver, String content, MessageType messageType, String mediaUrl, String mediaMetadata, MessageStatus status) {
+    public Message(Conversation conversation, User sender, User receiver, String content, MessageType messageType, String mediaUrl, String mediaMetadata, MessageStatus status) {
+        this.conversation = conversation;
         this.sender = sender;
         this.receiver = receiver;
         this.content = content;
@@ -57,8 +76,12 @@ public class Message {
         this.sentAt = LocalDateTime.now();
     }
 
+    public Message(User sender, User receiver, String content, MessageType messageType, String mediaUrl, String mediaMetadata, MessageStatus status) {
+        this(null, sender, receiver, content, messageType, mediaUrl, mediaMetadata, status);
+    }
+
     public Message(User sender, User receiver, String content, MessageStatus status) {
-        this(sender, receiver, content, MessageType.TEXT, null, null, status);
+        this(null, sender, receiver, content, MessageType.TEXT, null, null, status);
     }
 
     @PrePersist
@@ -80,6 +103,14 @@ public class Message {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
     }
 
     public User getSender() {
@@ -130,6 +161,30 @@ public class Message {
         this.mediaMetadata = mediaMetadata;
     }
 
+    public Message getRepliedMessage() {
+        return repliedMessage;
+    }
+
+    public void setRepliedMessage(Message repliedMessage) {
+        this.repliedMessage = repliedMessage;
+    }
+
+    public boolean isDeletedForEveryone() {
+        return deletedForEveryone;
+    }
+
+    public void setDeletedForEveryone(boolean deletedForEveryone) {
+        this.deletedForEveryone = deletedForEveryone;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
     public LocalDateTime getSentAt() {
         return sentAt;
     }
@@ -144,5 +199,13 @@ public class Message {
 
     public void setStatus(MessageStatus status) {
         this.status = status;
+    }
+
+    public String getReactions() {
+        return reactions;
+    }
+
+    public void setReactions(String reactions) {
+        this.reactions = reactions;
     }
 }

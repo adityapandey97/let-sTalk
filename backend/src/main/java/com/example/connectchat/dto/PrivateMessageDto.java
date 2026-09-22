@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 public class PrivateMessageDto {
     private Long id;
+    private Long conversationId;
     private Long senderId;
     private String senderUsername;
     private String senderFullName;
@@ -19,8 +20,12 @@ public class PrivateMessageDto {
     private MessageType messageType;
     private String mediaUrl;
     private String mediaMetadata;
+    private Long repliedMessageId;
+    private String repliedMessageContent;
+    private boolean deletedForEveryone;
     private LocalDateTime sentAt;
     private MessageStatus status;
+    private String reactions;
 
     public PrivateMessageDto() {
     }
@@ -48,23 +53,38 @@ public class PrivateMessageDto {
 
     public static PrivateMessageDto fromEntity(Message message) {
         if (message == null) return null;
-        return new PrivateMessageDto(
+        PrivateMessageDto dto = new PrivateMessageDto(
             message.getId(),
             message.getSender().getId(),
             message.getSender().getUsername(),
             message.getSender().getFullName(),
             message.getSender().getAvatarUrl(),
-            message.getReceiver().getId(),
-            message.getReceiver().getUsername(),
-            message.getReceiver().getFullName(),
-            message.getReceiver().getAvatarUrl(),
-            message.getContent(),
+            message.getReceiver() != null ? message.getReceiver().getId() : null,
+            message.getReceiver() != null ? message.getReceiver().getUsername() : null,
+            message.getReceiver() != null ? message.getReceiver().getFullName() : null,
+            message.getReceiver() != null ? message.getReceiver().getAvatarUrl() : null,
+            message.isDeletedForEveryone() ? "This message was deleted" : message.getContent(),
             message.getMessageType(),
-            message.getMediaUrl(),
+            message.isDeletedForEveryone() ? null : message.getMediaUrl(),
             message.getMediaMetadata(),
             message.getSentAt(),
             message.getStatus()
         );
+
+        dto.setReactions(message.getReactions());
+
+        if (message.getConversation() != null) {
+            dto.setConversationId(message.getConversation().getId());
+        }
+        dto.setDeletedForEveryone(message.isDeletedForEveryone());
+        if (message.getRepliedMessage() != null) {
+            dto.setRepliedMessageId(message.getRepliedMessage().getId());
+            dto.setRepliedMessageContent(message.getRepliedMessage().isDeletedForEveryone()
+                    ? "This message was deleted"
+                    : message.getRepliedMessage().getContent());
+        }
+
+        return dto;
     }
 
     public Long getId() {
@@ -73,6 +93,14 @@ public class PrivateMessageDto {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getConversationId() {
+        return conversationId;
+    }
+
+    public void setConversationId(Long conversationId) {
+        this.conversationId = conversationId;
     }
 
     public Long getSenderId() {
@@ -171,6 +199,30 @@ public class PrivateMessageDto {
         this.mediaMetadata = mediaMetadata;
     }
 
+    public Long getRepliedMessageId() {
+        return repliedMessageId;
+    }
+
+    public void setRepliedMessageId(Long repliedMessageId) {
+        this.repliedMessageId = repliedMessageId;
+    }
+
+    public String getRepliedMessageContent() {
+        return repliedMessageContent;
+    }
+
+    public void setRepliedMessageContent(String repliedMessageContent) {
+        this.repliedMessageContent = repliedMessageContent;
+    }
+
+    public boolean isDeletedForEveryone() {
+        return deletedForEveryone;
+    }
+
+    public void setDeletedForEveryone(boolean deletedForEveryone) {
+        this.deletedForEveryone = deletedForEveryone;
+    }
+
     public LocalDateTime getSentAt() {
         return sentAt;
     }
@@ -185,5 +237,13 @@ public class PrivateMessageDto {
 
     public void setStatus(MessageStatus status) {
         this.status = status;
+    }
+
+    public String getReactions() {
+        return reactions;
+    }
+
+    public void setReactions(String reactions) {
+        this.reactions = reactions;
     }
 }

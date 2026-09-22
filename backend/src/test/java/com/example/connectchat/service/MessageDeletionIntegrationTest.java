@@ -1,5 +1,6 @@
 package com.example.connectchat.service;
 
+import com.example.connectchat.dto.PrivateMessageDto;
 import com.example.connectchat.model.Message;
 import com.example.connectchat.model.MessageStatus;
 import com.example.connectchat.model.MessageType;
@@ -11,11 +12,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@Transactional
 class MessageDeletionIntegrationTest {
 
     @Autowired
@@ -33,10 +37,13 @@ class MessageDeletionIntegrationTest {
     @BeforeEach
     void setUp() {
         messageRepository.deleteAll();
-        userRepository.deleteAll();
 
-        user1 = userRepository.save(new User("Alice Wonderland", "alice_test", "alice_test@example.com", "Bio", "avatar1", "default"));
-        user2 = userRepository.save(new User("Bob Builder", "bob_test", "bob_test@example.com", "Bio", "avatar2", "default"));
+        user1 = userRepository.findByUsername("alice_del_test").orElseGet(() ->
+            userRepository.save(new User("Alice Wonderland", "alice_del_test", "alice_del@example.com", "Bio", "avatar1", "default"))
+        );
+        user2 = userRepository.findByUsername("bob_del_test").orElseGet(() ->
+            userRepository.save(new User("Bob Builder", "bob_del_test", "bob_del@example.com", "Bio", "avatar2", "default"))
+        );
     }
 
     @Test
@@ -66,5 +73,19 @@ class MessageDeletionIntegrationTest {
 
         List<Message> clearedHistory = messageRepository.findConversationBetween(user1.getId(), user2.getId());
         assertEquals(0, clearedHistory.size());
+    }
+
+    @Test
+    void testReactToMessageSuccessfully() {
+        Message msg = messageRepository.save(new Message(user1, user2, "React test message", MessageType.TEXT, null, null, MessageStatus.SENT));
+        PrivateMessageDto reacted = privateMessageService.reactToMessage(msg.getId(), user1.getId(), "❤️");
+        assertNotNull(reacted);
+        assertNotNull(reacted.getReactions());
+        assertTrue(reacted.getReactions().contains("❤️"));
+
+        // Toggle off reaction
+        PrivateMessageDto unreacted = privateMessageService.reactToMessage(msg.getId(), user1.getId(), "❤️");
+        assertNotNull(unreacted);
+        assertFalse(unreacted.getReactions().contains("❤️"));
     }
 }

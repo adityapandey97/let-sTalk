@@ -1,0 +1,85 @@
+/* =============================================================================
+   ConnectChat Responsive Layouts & Breakpoints
+   Smooth transitions across desktop, tablet, and mobile displays
+   ============================================================================= */
+
+/* Back to chat list button (visible only on mobile) */
+.chat-back-btn {
+    display: none;
+    margin-right: 4px;
+}
+
+@media (max-width: 900px) {
+    :root {
+        --sidebar-width: 320px;
+    }
+
+    .app-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .app-wrapper::before {
+        display: none;
+    }
+
+    .message-bubble {
+        max-width: 80%;
+    }
+}
+
+@media (max-width: 720px) {
+    .app-container {
+        position: relative;
+    }
+
+    .sidebar {
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 5;
+        transition: transform 0.25s ease;
+    }
+
+    .main-chat {
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 4;
+        transition: transform 0.25s ease;
+    }
+
+    /* Mobile state switching */
+    .app-container.chat-active .sidebar {
+        transform: translateX(-100%);
+        pointer-events: none;
+    }
+
+    .app-container.chat-active .main-chat {
+        z-index: 6;
+        transform: translateX(0);
+    }
+
+    .chat-back-btn {
+        display: inline-flex;
+    }
+
+    .message-bubble {
+        max-width: 88%;
+    }
+
+    .modal-card {
+        max-width: 95vw;
+        margin: 10px;
+    }
+
+    .auth-view-container {
+        max-width: 92vw;
+    }
+}

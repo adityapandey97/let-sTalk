@@ -1,0 +1,362 @@
+/* =============================================================================
+   ConnectChat Reusable UI Components
+   Avatars, Badges, Buttons, Inputs, Modals, Dropdowns, and Toast Alerts
+   ============================================================================= */
+
+/* Avatars */
+.avatar-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    background: linear-gradient(135deg, #00a884 0%, #008069 100%);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: var(--font-size-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    text-transform: uppercase;
+}
+
+.avatar.avatar-sm { width: 32px; height: 32px; font-size: var(--font-size-xs); }
+.avatar.avatar-md { width: 44px; height: 44px; font-size: var(--font-size-md); }
+.avatar.avatar-lg { width: 56px; height: 56px; font-size: var(--font-size-xl); }
+.avatar.avatar-xl { width: 84px; height: 84px; font-size: var(--font-size-2xl); }
+
+/* Online Status Indicator Dot */
+.status-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+    border: 2px solid var(--bg-sidebar);
+    background-color: var(--text-muted);
+}
+
+.status-indicator.online {
+    background-color: var(--accent-green);
+}
+
+/* Story Ring */
+.story-avatar-wrap {
+    position: relative;
+    padding: 2.5px;
+    border-radius: var(--radius-full);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+}
+
+.story-avatar-wrap.has-story {
+    border-color: var(--primary-color);
+}
+
+.story-avatar-wrap.all-viewed {
+    border-color: var(--text-muted);
+}
+
+.story-avatar-wrap:hover {
+    transform: scale(1.05);
+}
+
+/* Icon Buttons */
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.icon-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.icon-btn:active {
+    background-color: var(--bg-active);
+}
+
+.icon-btn.primary {
+    color: var(--primary-color);
+}
+
+.icon-btn.danger {
+    color: var(--accent-red);
+}
+
+.icon-btn.active {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+/* Standard Buttons */
+.btn-primary {
+    background: var(--primary-gradient);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 1px 3px rgba(0, 168, 132, 0.2);
+    transition: all var(--transition-fast);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #008f6f 0%, #00705a 100%);
+    box-shadow: 0 2px 6px rgba(0, 168, 132, 0.3);
+}
+
+.btn-secondary {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+    background-color: var(--bg-active);
+}
+
+.btn-danger {
+    background-color: var(--accent-red);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.btn-danger:hover {
+    background-color: #d32f2f;
+}
+
+/* Badges */
+.badge-unread {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: var(--radius-full);
+    background-color: var(--accent-green);
+    color: #ffffff;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Search Bar */
+.search-bar-wrap {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-hover);
+    border-radius: var(--radius-sm);
+    padding: 7px 12px;
+    gap: 10px;
+    transition: background var(--transition-fast);
+}
+
+.search-bar-wrap:focus-within {
+    background-color: var(--bg-input);
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.search-input {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Form Fields */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.form-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    transition: border var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Modals */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(11, 20, 26, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-modal);
+    padding: 16px;
+    backdrop-filter: blur(4px);
+    transition: opacity var(--transition-fast);
+}
+
+.modal-backdrop.hidden {
+    display: none !important;
+}
+
+.modal-card {
+    background-color: var(--bg-modal);
+    border-radius: var(--radius-md);
+    width: 100%;
+    max-width: 520px;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.modal-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-sidebar-header);
+}
+
+.modal-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-sidebar-header);
+}
+
+/* Dropdown Context Menus */
+.dropdown-menu {
+    position: absolute;
+    background-color: var(--bg-modal);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+    min-width: 180px;
+    padding: 6px 0;
+    z-index: var(--z-dropdown);
+}
+
+.dropdown-menu.hidden {
+    display: none !important;
+}
+
+.dropdown-item {
+    width: 100%;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    text-align: left;
+    transition: background var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-hover);
+}
+
+.dropdown-item.danger {
+    color: var(--accent-red);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 4px 0;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: var(--z-toast);
+    pointer-events: none;
+}
+
+.toast {
+    background-color: #111b21;
+    color: #ffffff;
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: auto;
+    max-width: 380px;
+    animation: toastSlideIn 0.3s ease-out;
+}
+
+.toast.success { border-left: 4px solid var(--accent-green); }
+.toast.error { border-left: 4px solid var(--accent-red); }
+.toast.info { border-left: 4px solid var(--accent-blue); }
+
+@keyframes toastSlideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

@@ -22,7 +22,7 @@ import java.util.UUID;
  * and served through the WebMvc resource handler at /uploads/**.
  */
 @RestController
-@RequestMapping("/api/media")
+@RequestMapping({"/api/media", "/api/files"})
 public class MediaUploadController {
 
     private final Path uploadDirectory;

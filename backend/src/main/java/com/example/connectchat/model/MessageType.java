@@ -11,6 +11,7 @@ public enum MessageType {
     VIDEO,
     AUDIO,
     CONTACT,
-    FILE
+    FILE,
+    DOCUMENT
 }
 
