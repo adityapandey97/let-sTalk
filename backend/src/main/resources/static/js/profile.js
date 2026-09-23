@@ -1,9 +1,11 @@
 /**
- * ConnectChat Profile & Settings Module
+ * Let's Talk — Profile & Settings Module
  */
 window.Profile = (function () {
+    let pendingProfilePhotoUrl = null;
+
     function openProfileModal() {
-        if (!window.state.currentUser) return;
+        if (!window.state || !window.state.currentUser) return;
         const user = window.state.currentUser;
 
         const nameInput = document.getElementById('profile-fullname-input');
@@ -12,10 +14,11 @@ window.Profile = (function () {
 
         if (nameInput) nameInput.value = user.fullName || '';
         if (bioInput) bioInput.value = user.bio || '';
+        pendingProfilePhotoUrl = user.profilePhoto || user.avatarUrl || null;
 
         if (avatarPreview) {
-            if (user.avatarUrl) {
-                avatarPreview.innerHTML = `<img src="${window.getApiUrl(user.avatarUrl)}" class="avatar avatar-xl" alt="Avatar"/>`;
+            if (pendingProfilePhotoUrl) {
+                avatarPreview.innerHTML = `<img src="${window.getApiUrl(pendingProfilePhotoUrl)}" class="avatar avatar-xl" alt="Avatar"/>`;
             } else {
                 const initials = window.Utils.getInitials(user.fullName || user.username);
                 const gradient = window.Utils.getAvatarGradient(user.username);
@@ -23,45 +26,51 @@ window.Profile = (function () {
             }
         }
 
-        window.UI.openModal('modal-profile-settings');
+        window.UI && window.UI.openModal('modal-profile-settings');
     }
 
     async function handleAvatarUpload(fileInput) {
         const file = fileInput.files && fileInput.files[0];
         if (!file) return;
 
-        const uploadRes = await window.Files.uploadFile(file);
-        if (uploadRes && uploadRes.url) {
-            window.state.currentUser.avatarUrl = uploadRes.url;
-            const preview = document.getElementById('profile-avatar-preview');
-            if (preview) {
-                preview.innerHTML = `<img src="${window.getApiUrl(uploadRes.url)}" class="avatar avatar-xl" alt="Avatar"/>`;
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', 'profile');
+
+            const uploadRes = await window.ApiClient.post('/api/files/upload', formData);
+            if (uploadRes && uploadRes.fileUrl) {
+                pendingProfilePhotoUrl = uploadRes.fileUrl;
+                const preview = document.getElementById('profile-avatar-preview');
+                if (preview) {
+                    preview.innerHTML = `<img src="${window.getApiUrl(uploadRes.fileUrl)}" class="avatar avatar-xl" alt="Avatar"/>`;
+                }
             }
+        } catch (err) {
+            window.UI && window.UI.showToast(err.message || 'Failed to upload photo', 'error');
         }
     }
 
     async function saveProfile() {
-        if (!window.state.currentUser) return;
-        const userId = window.state.currentUser.id;
+        if (!window.state || !window.state.currentUser) return;
 
         const fullName = document.getElementById('profile-fullname-input')?.value || '';
         const bio = document.getElementById('profile-bio-input')?.value || '';
-        const avatarUrl = window.state.currentUser.avatarUrl || '';
 
         try {
-            const updated = await window.ApiClient.put(`/api/users/${userId}/profile`, {
+            const updated = await window.ApiClient.put('/api/users/profile', {
                 fullName: fullName.trim(),
                 bio: bio.trim(),
-                avatarUrl: avatarUrl
+                profilePhoto: pendingProfilePhotoUrl || ''
             });
 
             window.state.currentUser = updated;
             localStorage.setItem('connectchat_user', JSON.stringify(updated));
-            window.UI.updateCurrentUserProfileUI(updated);
-            window.UI.closeModal('modal-profile-settings');
-            window.UI.showToast('Profile updated!', 'success');
+            window.UI && window.UI.updateCurrentUserProfileUI(updated);
+            window.UI && window.UI.closeModal('modal-profile-settings');
+            window.UI && window.UI.showToast('Profile updated!', 'success');
         } catch (err) {
-            window.UI.showToast(err.message || 'Failed to update profile', 'error');
+            window.UI && window.UI.showToast(err.message || 'Failed to update profile', 'error');
         }
     }
 

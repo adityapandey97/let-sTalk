@@ -1,27 +1,27 @@
 /**
- * ConnectChat Master Application Orchestrator
+ * Let's Talk — Master Application Orchestrator
  */
 
-// Global state container
 window.state = {
     currentUser: null,
+    activeConversationId: null,
     activeChat: null,
     connected: false,
+    conversations: [],
     connections: [],
     groups: [],
     pendingRequests: [],
     messages: [],
-    storiesFeed: [],
     call: {
         pendingOffer: null
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Initialize Theme (Light / Dark)
+    // 1. Initialize Theme (Light / Dark / Royal / Purple)
     if (window.Theme) window.Theme.initTheme();
 
-    // 2. Setup Global Click Listeners (Outside dismissal)
+    // 2. Setup Global Click Listeners (Outside click dismissal)
     setupGlobalClickListeners();
 
     // 3. Setup Auth Form Submissions
@@ -83,7 +83,6 @@ function setupGlobalClickListeners() {
 }
 
 function setupAuthForms() {
-    // Sign In Form
     const loginForm = document.getElementById('form-login');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
@@ -97,16 +96,15 @@ function setupAuthForms() {
 
             try {
                 await window.Auth.login(identifier, password);
-                window.UI.showToast('Welcome back!', 'success');
+                window.UI && window.UI.showToast('Welcome back!', 'success');
             } catch (err) {
-                window.UI.showToast(err.message || 'Login failed', 'error');
+                window.UI && window.UI.showToast(err.message || 'Login failed', 'error');
             } finally {
                 if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
             }
         });
     }
 
-    // Avatar File Picker & Preview
     const avatarInput = document.getElementById('reg-avatar-file');
     const avatarPreview = document.getElementById('reg-avatar-preview');
     const avatarPlaceholder = document.getElementById('reg-avatar-placeholder');
@@ -118,7 +116,7 @@ function setupAuthForms() {
             if (!file) return;
 
             if (!file.type.startsWith('image/')) {
-                window.UI.showToast('Please select a valid image file', 'error');
+                window.UI && window.UI.showToast('Please select a valid image file', 'error');
                 return;
             }
 
@@ -137,7 +135,6 @@ function setupAuthForms() {
         });
     }
 
-    // Register Form
     const registerForm = document.getElementById('form-register');
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
@@ -154,12 +151,12 @@ function setupAuthForms() {
             if (btn) { btn.disabled = true; btn.textContent = 'Creating account...'; }
 
             try {
-                let uploadedAvatarUrl = null;
+                let uploadedAvatarUrl = '';
                 if (selectedAvatarFile) {
                     if (btn) btn.textContent = 'Uploading photo...';
-                    const uploadRes = await window.Files.uploadFile(selectedAvatarFile);
-                    if (uploadRes && uploadRes.url) {
-                        uploadedAvatarUrl = uploadRes.url;
+                    const uploadRes = await window.Files.uploadFile(selectedAvatarFile, 'profile');
+                    if (uploadRes && uploadRes.fileUrl) {
+                        uploadedAvatarUrl = uploadRes.fileUrl;
                     }
                 }
 
@@ -169,34 +166,37 @@ function setupAuthForms() {
                     username: username.trim().toLowerCase(),
                     email: email.trim().toLowerCase(),
                     password: password,
+                    confirmPassword: password,
                     bio: bio ? bio.trim() : '',
-                    avatarUrl: uploadedAvatarUrl
+                    profilePhoto: uploadedAvatarUrl
                 });
-                window.UI.showToast('Welcome to Let\'s Talk!', 'success');
+                window.UI && window.UI.showToast("Welcome to Let's Talk!", 'success');
             } catch (err) {
-                window.UI.showToast(err.message || 'Registration failed', 'error');
+                window.UI && window.UI.showToast(err.message || 'Registration failed', 'error');
             } finally {
                 if (btn) { btn.disabled = false; btn.textContent = 'Create Account'; }
             }
         });
     }
 
-    // Tab Switcher between Sign In & Register
     const tabLogin = document.getElementById('auth-tab-login');
     const tabRegister = document.getElementById('auth-tab-register');
+    const tabsRow = document.getElementById('auth-tabs-row');
+    const carouselTrack = document.getElementById('auth-carousel-track');
+
     if (tabLogin && tabRegister) {
         tabLogin.addEventListener('click', () => {
             tabLogin.classList.add('active');
             tabRegister.classList.remove('active');
-            if (loginForm) loginForm.classList.remove('hidden');
-            if (registerForm) registerForm.classList.add('hidden');
+            if (tabsRow) tabsRow.classList.remove('slide-register');
+            if (carouselTrack) carouselTrack.classList.remove('slide-register');
         });
 
         tabRegister.addEventListener('click', () => {
             tabRegister.classList.add('active');
             tabLogin.classList.remove('active');
-            if (registerForm) registerForm.classList.remove('hidden');
-            if (loginForm) loginForm.classList.add('hidden');
+            if (tabsRow) tabsRow.classList.add('slide-register');
+            if (carouselTrack) carouselTrack.classList.add('slide-register');
         });
     }
 }
@@ -214,10 +214,11 @@ function setupChatInputs() {
             }
         });
 
-        // Auto-grow textarea height
+        // Auto-grow textarea height & toggle microphone/send icon
         input.addEventListener('input', () => {
             input.style.height = 'auto';
             input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+            if (window.Chat) window.Chat.handleInputTyping();
         });
     }
 
@@ -231,7 +232,6 @@ function setupChatInputs() {
 }
 
 function setupSearchListeners() {
-    // Sidebar filter across chats
     const searchInput = document.getElementById('sidebar-search-input');
     if (searchInput) {
         searchInput.addEventListener('input', window.Utils.debounce((e) => {
@@ -245,51 +245,13 @@ function setupSearchListeners() {
         }, 150));
     }
 
-    // Modal Search for new users
     const modalSearchInput = document.getElementById('user-search-input');
-    const modalResultsContainer = document.getElementById('user-search-results');
-    if (modalSearchInput && modalResultsContainer) {
+    if (modalSearchInput) {
         modalSearchInput.addEventListener('input', window.Utils.debounce(async (e) => {
             const query = e.target.value.trim();
-            if (!query) {
-                modalResultsContainer.innerHTML = '';
-                return;
+            if (window.Connections) {
+                window.Connections.searchUsers(query);
             }
-
-            modalResultsContainer.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--text-muted);">Searching users...</div>`;
-            const results = await window.Contacts.searchUsers(query);
-
-            if (results.length === 0) {
-                modalResultsContainer.innerHTML = `<div style="padding: 16px; text-align: center; color: var(--text-muted);">No matching users found</div>`;
-                return;
-            }
-
-            modalResultsContainer.innerHTML = results.map(user => {
-                const initials = window.Utils.getInitials(user.fullName || user.username);
-                const gradient = window.Utils.getAvatarGradient(user.username);
-
-                let actionBtn = '';
-                if (user.relationshipState === 'CONNECTED') {
-                    actionBtn = `<span class="empty-state-badge" style="color: var(--accent-green);">Connected</span>`;
-                } else if (user.relationshipState === 'OUTGOING_PENDING') {
-                    actionBtn = `<span class="empty-state-badge">Pending</span>`;
-                } else {
-                    actionBtn = `<button type="button" class="btn-primary" style="padding: 6px 14px; font-size: var(--font-size-xs);" onclick="window.Contacts.sendConnectionRequest(${user.id})">Connect</button>`;
-                }
-
-                return `
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--border-light);">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div class="avatar avatar-sm" style="background: ${gradient}">${initials}</div>
-                            <div>
-                                <strong style="display: block; font-size: var(--font-size-sm);">${window.Utils.escapeHtml(user.fullName || user.username)}</strong>
-                                <span style="font-size: var(--font-size-xs); color: var(--text-muted);">@${window.Utils.escapeHtml(user.username)}</span>
-                            </div>
-                        </div>
-                        ${actionBtn}
-                    </div>
-                `;
-            }).join('');
         }, 200));
     }
 }

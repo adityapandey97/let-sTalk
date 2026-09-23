@@ -1,0 +1,147 @@
+/* =============================================================================
+   Let's Talk — WebRTC Calling Overlay Styles (Audio & Video Calling)
+   ============================================================================= */
+
+.call-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(11, 20, 26, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    z-index: var(--z-call);
+    padding: 32px 24px;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+}
+
+.call-modal-backdrop.hidden {
+    display: none !important;
+}
+
+.call-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: #ffffff;
+    z-index: 10;
+}
+
+.call-peer-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.call-peer-name {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    margin-top: 14px;
+}
+
+.call-status-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Call Video Stream Stage */
+.call-video-stage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remote-video-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.local-video-pip {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 160px;
+    height: 220px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    object-fit: cover;
+    z-index: 20;
+    background-color: #000;
+}
+
+/* Call Controls Bottom Bar */
+.call-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 20;
+    background-color: rgba(32, 44, 51, 0.85);
+    padding: 14px 28px;
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(8px);
+}
+
+.call-action-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-full);
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.call-action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+}
+
+.call-action-btn.active-off {
+    background-color: #ffffff;
+    color: #111b21;
+}
+
+.call-action-btn.hangup {
+    background-color: var(--accent-red);
+    color: #ffffff;
+    width: 60px;
+    height: 60px;
+}
+
+.call-action-btn.hangup:hover {
+    background-color: #c62828;
+    transform: scale(1.08);
+}
+
+.call-action-btn.answer {
+    background-color: var(--accent-green);
+    color: #ffffff;
+    width: 60px;
+    height: 60px;
+}
+
+.call-action-btn.answer:hover {
+    background-color: #1eb954;
+    transform: scale(1.08);
+}

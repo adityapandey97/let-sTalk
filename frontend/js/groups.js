@@ -1,22 +1,15 @@
 /**
- * ConnectChat Groups Module
+ * Let's Talk — Groups Module
+ * Manages group creation, member management, and integration with conversations.
  */
 window.Groups = (function () {
     async function loadGroups() {
-        if (!window.state.currentUser) return;
-        const userId = window.state.currentUser.id;
+        if (!window.state || !window.state.currentUser) return;
 
         try {
-            const groups = await window.ApiClient.get(`/api/groups/user/${userId}`);
+            const groups = await window.ApiClient.get('/api/groups');
             window.state.groups = groups || [];
             renderGroupsList();
-
-            // Subscribe to all group channels on WebSocket
-            if (window.WebSocketManager) {
-                window.state.groups.forEach(g => {
-                    window.WebSocketManager.subscribeToGroup(g.id);
-                });
-            }
         } catch (err) {
             console.error('Failed to load groups:', err);
         }
@@ -24,13 +17,20 @@ window.Groups = (function () {
 
     function renderGroupsList() {
         const container = document.getElementById('sidebar-groups-list');
+        const groups = window.state.groups || [];
+
+        const countBadge = document.getElementById('groups-count-badge');
+        if (countBadge) {
+            countBadge.textContent = groups.length;
+            countBadge.classList.toggle('hidden', groups.length === 0);
+        }
+
         if (!container) return;
 
-        const groups = window.state.groups || [];
         if (groups.length === 0) {
             container.innerHTML = `
                 <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: var(--font-size-sm);">
-                    No groups yet.<br/>Click <strong>New Group</strong> to create one!
+                    No groups yet.<br/>Click <strong>New Group</strong> above to create one!
                 </div>
             `;
             return;
@@ -39,18 +39,24 @@ window.Groups = (function () {
         container.innerHTML = groups.map(g => {
             const initials = window.Utils.getInitials(g.name);
             const gradient = window.Utils.getAvatarGradient(g.name);
+            const photoUrl = g.photo;
+            const avatarHtml = photoUrl && photoUrl.trim() !== ''
+                ? `<img src="${window.getApiUrl(photoUrl)}" class="avatar" alt="${window.Utils.escapeHtml(g.name)}"/>`
+                : `<div class="avatar" style="background: ${gradient}">${initials}</div>`;
+
+            const memberCount = (g.members ? g.members.length : 1);
 
             return `
-                <div class="conversation-item" onclick="window.Groups.openGroupChat(${g.id}, '${window.Utils.escapeHtml(g.name)}')">
+                <div class="conversation-item" onclick="window.Groups.openGroupChat(${g.id}, '${window.Utils.escapeHtml(g.name)}', ${g.conversationId || 'null'}, '${photoUrl || ''}')">
                     <div class="avatar-wrap">
-                        <div class="avatar" style="background: ${gradient}">${initials}</div>
+                        ${avatarHtml}
                     </div>
                     <div class="conversation-info">
                         <div class="conversation-header-row">
                             <span class="conversation-name">${window.Utils.escapeHtml(g.name)}</span>
                         </div>
                         <div class="conversation-message-row">
-                            <span class="conversation-snippet">${g.memberCount || 1} members</span>
+                            <span class="conversation-snippet">${memberCount} members</span>
                         </div>
                     </div>
                 </div>
@@ -58,134 +64,87 @@ window.Groups = (function () {
         }).join('');
     }
 
-    function openGroupChat(groupId, name) {
-        window.state.activeChat = {
-            type: 'group',
-            id: groupId,
-            name: name
-        };
-
-        window.UI.toggleMobileChat(true);
-
-        const emptyState = document.getElementById('chat-empty-state');
-        const activeContainer = document.getElementById('chat-active-container');
-        if (emptyState) emptyState.classList.add('hidden');
-        if (activeContainer) activeContainer.classList.remove('hidden');
-
-        const nameEl = document.getElementById('active-chat-name');
-        const statusEl = document.getElementById('active-chat-status');
-        const avatarContainer = document.getElementById('active-chat-avatar-wrap');
-
-        if (nameEl) nameEl.textContent = name;
-        if (statusEl) statusEl.textContent = 'Group Channel';
-
-        if (avatarContainer) {
-            const initials = window.Utils.getInitials(name);
-            const gradient = window.Utils.getAvatarGradient(name);
-            avatarContainer.innerHTML = `<div class="avatar" style="background: ${gradient}">${initials}</div>`;
-        }
-
-        loadGroupMessages(groupId);
-    }
-
-    async function loadGroupMessages(groupId) {
-        if (!window.state.currentUser) return;
-        const currentUserId = window.state.currentUser.id;
-
-        const scrollContainer = document.getElementById('chat-messages-container');
-        if (scrollContainer) {
-            scrollContainer.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-muted);">Loading group messages...</div>`;
-        }
-
-        try {
-            const messages = await window.ApiClient.get(`/api/groups/${groupId}/messages?userId=${currentUserId}`);
-            renderGroupMessages(messages || []);
-        } catch (err) {
-            console.error('Failed to load group messages:', err);
-        }
-    }
-
-    function renderGroupMessages(messages) {
-        const container = document.getElementById('chat-messages-container');
-        if (!container) return;
-
-        if (messages.length === 0) {
-            container.innerHTML = `
-                <div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: var(--font-size-sm);">
-                    Welcome to the group!<br/>Be the first to say hello.
-                </div>
-            `;
-            return;
-        }
-
-        let html = '';
-        messages.forEach(msg => {
-            const isOutgoing = msg.senderId === window.state.currentUser.id;
-            const timeStr = window.Utils.formatTime(msg.sentAt);
-
-            html += `
-                <div class="message-bubble-wrapper ${isOutgoing ? 'outgoing' : 'incoming'}">
-                    <div class="message-bubble ${isOutgoing ? 'outgoing' : 'incoming'}">
-                        ${!isOutgoing ? `<div style="font-size: var(--font-size-xs); font-weight: 700; color: var(--primary-color); margin-bottom: 2px;">${window.Utils.escapeHtml(msg.senderFullName || msg.senderUsername)}</div>` : ''}
-                        <span>${window.Utils.escapeHtml(msg.content)}</span>
-                        <div class="message-meta">
-                            <span>${timeStr}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = html;
-        container.scrollTop = container.scrollHeight;
-    }
-
-    function handleIncomingGroupMessage(msg) {
-        if (!msg) return;
-
-        if (window.state.activeChat && window.state.activeChat.type === 'group' && window.state.activeChat.id === msg.groupId) {
-            const container = document.getElementById('chat-messages-container');
-            if (container) {
-                const isOutgoing = msg.senderId === window.state.currentUser.id;
-                const timeStr = window.Utils.formatTime(msg.sentAt);
-                const bubbleHtml = `
-                    <div class="message-bubble-wrapper ${isOutgoing ? 'outgoing' : 'incoming'}">
-                        <div class="message-bubble ${isOutgoing ? 'outgoing' : 'incoming'}">
-                            ${!isOutgoing ? `<div style="font-size: var(--font-size-xs); font-weight: 700; color: var(--primary-color); margin-bottom: 2px;">${window.Utils.escapeHtml(msg.senderFullName || msg.senderUsername)}</div>` : ''}
-                            <span>${window.Utils.escapeHtml(msg.content)}</span>
-                            <div class="message-meta">
-                                <span>${timeStr}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', bubbleHtml);
-                container.scrollTop = container.scrollHeight;
+    async function openGroupChat(groupId, name, conversationId, photoUrl) {
+        if (conversationId && window.Chat) {
+            window.Chat.openConversation(conversationId, name, photoUrl, true);
+        } else {
+            // Fetch group details to get conversationId if not present
+            try {
+                const g = await window.ApiClient.get(`/api/groups/${groupId}`);
+                if (g.conversationId && window.Chat) {
+                    window.Chat.openConversation(g.conversationId, g.name, g.photo, true);
+                }
+            } catch (err) {
+                window.UI && window.UI.showToast(err.message || 'Could not open group chat', 'error');
             }
         }
     }
 
-    async function createGroup(name, memberIds) {
-        if (!window.state.currentUser) return;
+    function openCreateGroupModal() {
+        const modal = document.getElementById('create-group-modal');
+        if (!modal) return;
+
+        // Populate connected users checklist
+        const membersList = document.getElementById('group-members-checklist');
+        if (membersList) {
+            const connections = window.state.connections || [];
+            if (connections.length === 0) {
+                membersList.innerHTML = `<div style="padding: 12px; color: var(--text-muted); font-size: var(--font-size-sm);">Connect with users first to add them to your group.</div>`;
+            } else {
+                membersList.innerHTML = connections.map(c => {
+                    const u = c.user || c.otherUser;
+                    if (!u) return '';
+                    return `
+                        <label class="group-member-checkbox-row">
+                            <input type="checkbox" name="group-member-id" value="${u.id}" />
+                            <span>${window.Utils.escapeHtml(u.fullName || u.username)} (@${window.Utils.escapeHtml(u.username)})</span>
+                        </label>
+                    `;
+                }).join('');
+            }
+        }
+
+        window.UI && window.UI.openModal('create-group-modal');
+    }
+
+    async function submitCreateGroup(event) {
+        if (event) event.preventDefault();
+
+        const nameInput = document.getElementById('group-name-input');
+        if (!nameInput || !nameInput.value.trim()) {
+            window.UI && window.UI.showToast('Please enter a group name.', 'error');
+            return;
+        }
+
+        const selectedMembers = [];
+        document.querySelectorAll('input[name="group-member-id"]:checked').forEach(cb => {
+            selectedMembers.push(parseInt(cb.value, 10));
+        });
+
         try {
-            const created = await window.ApiClient.post('/api/groups', {
-                name: name,
-                creatorId: window.state.currentUser.id,
-                memberIds: memberIds
+            const newGroup = await window.ApiClient.post('/api/groups', {
+                name: nameInput.value.trim(),
+                photo: '',
+                memberIds: selectedMembers
             });
-            window.UI.showToast(`Group "${name}" created!`, 'success');
-            window.UI.closeModal('modal-new-group');
+
+            window.UI && window.UI.closeModal('create-group-modal');
+            window.UI && window.UI.showToast(`Group "${newGroup.name}" created!`, 'success');
+            nameInput.value = '';
+
             loadGroups();
+            if (newGroup.conversationId && window.Chat) {
+                window.Chat.openConversation(newGroup.conversationId, newGroup.name, newGroup.photo, true);
+            }
         } catch (err) {
-            window.UI.showToast(err.message || 'Failed to create group', 'error');
+            window.UI && window.UI.showToast(err.message || 'Failed to create group.', 'error');
         }
     }
 
     return {
         loadGroups,
-        renderGroupsList,
         openGroupChat,
-        handleIncomingGroupMessage,
-        createGroup
+        openCreateGroupModal,
+        submitCreateGroup
     };
 })();

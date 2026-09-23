@@ -1,0 +1,8 @@
+-- =============================================================================
+-- Let's Talk (ConnectChat) Database Seed Script
+-- =============================================================================
+-- In compliance with Requirement 49 (NO DUMMY DATA):
+-- The application starts with an empty database.
+-- Users register their own authentic accounts via the Registration interface.
+-- No fake users (e.g. Aditya, Rahul, Priya) or hardcoded messages are seeded.
+-- =============================================================================

@@ -35,14 +35,19 @@ window.Notifications = (function () {
                 }
                 break;
 
+            case 'CONNECTION_REQUEST':
             case 'CONNECTION_REQUEST_RECEIVED':
-                window.UI.showToast(`New connection request from ${notif.title || 'a user'}`, 'info');
-                if (window.Contacts) window.Contacts.loadPendingRequests();
+                window.UI.showToast(notif.message || `New connection request from ${notif.title || 'a user'}`, 'info');
+                if (window.Connections) window.Connections.loadPendingRequests();
                 break;
 
+            case 'CONNECTION_ACCEPTED':
             case 'CONNECTION_REQUEST_ACCEPTED':
-                window.UI.showToast(`${notif.title || 'A user'} accepted your connection request`, 'success');
-                if (window.Contacts) window.Contacts.loadConnections();
+                window.UI.showToast(notif.message || `${notif.title || 'A user'} accepted your connection request`, 'success');
+                if (window.Connections) window.Connections.loadConnections();
+                if (window.Chat && typeof window.Chat.loadConversations === 'function') {
+                    window.Chat.loadConversations();
+                }
                 break;
 
             case 'GROUP_CREATED':

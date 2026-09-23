@@ -105,14 +105,26 @@ window.Auth = (function () {
     function onAuthSuccess(user) {
         window.UI.updateCurrentUserProfileUI(user);
         window.UI.showScreen('main-screen');
+        if (window.Chat && typeof window.Chat.closeConversation === 'function') {
+            window.Chat.closeConversation();
+        }
+        if (window.UI && typeof window.UI.setSidebarActiveTab === 'function') {
+            window.UI.setSidebarActiveTab('chats');
+        }
 
         // Connect WebSocket STOMP broker
         if (window.WebSocketManager) {
             window.WebSocketManager.connect(user.id);
         }
 
-        // Load initial data
-        if (window.Contacts) window.Contacts.loadConnections();
+        // Load initial data for all tabs
+        if (window.Chat && typeof window.Chat.loadConversations === 'function') {
+            window.Chat.loadConversations();
+        }
+        if (window.Connections) {
+            window.Connections.loadConnections();
+            window.Connections.loadPendingRequests();
+        }
         if (window.Groups) window.Groups.loadGroups();
         if (window.Stories) window.Stories.loadStoriesFeed();
     }

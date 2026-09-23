@@ -1,6 +1,35 @@
 /**
- * ConnectChat Unified HTTP API Client
+ * Let's Talk (ConnectChat) — Centralized HTTP API Client
+ * Uses relative URLs by default for same-origin production deployment.
  */
+window.APP_CONFIG = {
+    API_BASE_URL: '',
+
+    // WebRTC STUN ICE Servers
+    ICE_SERVERS: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' }
+    ],
+
+    MAX_FILE_SIZE_MB: 50
+};
+
+window.getApiUrl = function(path) {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:') || path.startsWith('data:')) {
+        return path;
+    }
+    const base = window.APP_CONFIG.API_BASE_URL || '';
+    if (!path.startsWith('/')) path = '/' + path;
+    return base + path;
+};
+
+window.getWsUrl = function() {
+    const base = window.APP_CONFIG.API_BASE_URL || '';
+    return base ? (base + '/ws') : '/ws';
+};
+
 window.ApiClient = (function () {
     async function request(endpoint, options = {}) {
         const url = window.getApiUrl(endpoint);
@@ -24,8 +53,7 @@ window.ApiClient = (function () {
             const response = await fetch(url, options);
 
             if (response.status === 401) {
-                // Token invalid or expired - trigger logout
-                window.Auth && window.Auth.handleUnauthorized();
+                window.Auth && window.Auth.handleUnauthorized && window.Auth.handleUnauthorized();
                 throw new Error('Session expired. Please sign in again.');
             }
 

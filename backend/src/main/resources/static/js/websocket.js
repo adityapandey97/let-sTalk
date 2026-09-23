@@ -1,7 +1,7 @@
 /**
- * ConnectChat WebSocket STOMP Manager
+ * Let's Talk — WebSocket STOMP Manager
  */
-window.WebSocketManager = (function () {
+window.WebSocketManager = window.ChatWs = (function () {
     let stompClient = null;
     let isConnected = false;
     let currentUserId = null;
@@ -17,14 +17,13 @@ window.WebSocketManager = (function () {
             return;
         }
 
-        const wsEndpoint = window.getWsUrl();
-        // Support SockJS fallback
+        const wsEndpoint = window.getWsUrl ? window.getWsUrl() : '/ws';
         const socket = new SockJS(wsEndpoint);
         stompClient = Stomp.over(socket);
-        stompClient.debug = null; // Suppress verbose console spam
+        stompClient.debug = null; // Suppress verbose console logs
 
         const headers = {};
-        const token = window.Auth ? window.Auth.getStoredToken() : null;
+        const token = localStorage.getItem('connectchat_token');
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
@@ -32,37 +31,42 @@ window.WebSocketManager = (function () {
         stompClient.connect(headers, () => {
             isConnected = true;
             reconnectAttempts = 0;
-            window.state.connected = true;
-            console.log('ConnectChat WebSocket STOMP connected');
+            if (window.state) window.state.connected = true;
+            console.log("Let's Talk WebSocket STOMP connected");
 
-            // 1. Subscribe to personal private messages
-            subscribe(`/topic/private/${userId}`, (msg) => {
-                const data = JSON.parse(msg.body);
-                if (window.Chat) window.Chat.handleIncomingMessage(data);
-            });
-
-            // 2. Subscribe to personal notifications & status ticks
+            // 1. Subscribe to personal notifications & ticks
             subscribe(`/topic/user/${userId}/notifications`, (msg) => {
-                const notif = JSON.parse(msg.body);
-                if (window.Notifications) window.Notifications.handleIncomingNotification(notif);
+                try {
+                    const notif = JSON.parse(msg.body);
+                    if (window.Notifications) window.Notifications.handleIncomingNotification(notif);
+                } catch (e) {}
             });
 
-            // 3. Subscribe to WebRTC Audio & Video Calling signaling
+            // 2. Subscribe to WebRTC Audio & Video Calling signaling
             subscribe(`/topic/user/${userId}/call`, (msg) => {
-                const signal = JSON.parse(msg.body);
-                if (window.Calls) window.Calls.handleIncomingCallSignal(signal);
+                try {
+                    const signal = JSON.parse(msg.body);
+                    if (window.Calls) window.Calls.handleIncomingCallSignal(signal);
+                } catch (e) {}
             });
 
-            // Re-subscribe to any active groups
-            if (window.state.groups) {
-                window.state.groups.forEach(g => {
-                    subscribeToGroup(g.id);
-                });
+            // 3. Subscribe to Presence updates
+            subscribe('/topic/presence', (msg) => {
+                try {
+                    const data = JSON.parse(msg.body);
+                    if (window.Chat && typeof window.Chat.handlePresenceChange === 'function') {
+                        window.Chat.handlePresenceChange(data);
+                    }
+                } catch (e) {}
+            });
+
+            // 4. Re-subscribe to active conversation if open
+            if (window.state && window.state.activeConversationId) {
+                subscribeToConversation(window.state.activeConversationId);
             }
         }, (error) => {
             isConnected = false;
-            window.state.connected = false;
-            console.warn('ConnectChat WebSocket disconnected:', error);
+            if (window.state) window.state.connected = false;
             scheduleReconnect();
         });
     }
@@ -72,24 +76,57 @@ window.WebSocketManager = (function () {
             return null;
         }
         if (activeSubscriptions.has(topic)) {
-            try { activeSubscriptions.get(topic).unsubscribe(); } catch {}
+            try { activeSubscriptions.get(topic).unsubscribe(); } catch (e) {}
         }
         const sub = stompClient.subscribe(topic, callback);
         activeSubscriptions.set(topic, sub);
         return sub;
     }
 
-    function subscribeToGroup(groupId) {
-        const topic = `/topic/group/${groupId}`;
-        return subscribe(topic, (msg) => {
-            const data = JSON.parse(msg.body);
-            if (window.Groups) window.Groups.handleIncomingGroupMessage(data);
+    function subscribeToConversation(conversationId) {
+        // Message topic
+        subscribe(`/topic/conversation/${conversationId}`, (msg) => {
+            try {
+                const data = JSON.parse(msg.body);
+                if (window.Chat && typeof window.Chat.handleIncomingMessage === 'function') {
+                    window.Chat.handleIncomingMessage(data);
+                }
+            } catch (e) {}
+        });
+
+        // Typing indicator topic
+        subscribe(`/topic/conversation/${conversationId}/typing`, (msg) => {
+            try {
+                const data = JSON.parse(msg.body);
+                if (window.Chat && typeof window.Chat.handleTypingSignal === 'function') {
+                    window.Chat.handleTypingSignal(data);
+                }
+            } catch (e) {}
+        });
+
+        // Status acknowledgments topic
+        subscribe(`/topic/conversation/${conversationId}/status`, (msg) => {
+            try {
+                const data = JSON.parse(msg.body);
+                if (window.Chat && typeof window.Chat.handleStatusUpdate === 'function') {
+                    window.Chat.handleStatusUpdate(data);
+                }
+            } catch (e) {}
+        });
+
+        // Deletions topic
+        subscribe(`/topic/conversation/${conversationId}/delete`, (msg) => {
+            try {
+                const data = JSON.parse(msg.body);
+                if (window.Chat && typeof window.Chat.handleMessageDeleted === 'function') {
+                    window.Chat.handleMessageDeleted(data);
+                }
+            } catch (e) {}
         });
     }
 
     function send(destination, payload) {
         if (!stompClient || !isConnected) {
-            console.warn('Cannot send STOMP message: socket is not connected');
             return false;
         }
         stompClient.send(destination, {}, JSON.stringify(payload));
@@ -98,13 +135,12 @@ window.WebSocketManager = (function () {
 
     function scheduleReconnect() {
         if (reconnectTimeout) clearTimeout(reconnectTimeout);
-        if (!window.state.currentUser) return; // User logged out
+        if (!window.state || !window.state.currentUser) return;
 
         const delay = Math.min(1000 * Math.pow(1.5, reconnectAttempts), 15000);
         reconnectAttempts++;
-        console.log(`Reconnecting WebSocket in ${Math.round(delay / 1000)}s (attempt ${reconnectAttempts})...`);
         reconnectTimeout = setTimeout(() => {
-            if (currentUserId && window.state.currentUser) {
+            if (currentUserId && window.state && window.state.currentUser) {
                 connect(currentUserId);
             }
         }, delay);
@@ -115,23 +151,19 @@ window.WebSocketManager = (function () {
         activeSubscriptions.clear();
         if (stompClient) {
             try {
-                stompClient.disconnect(() => {
-                    console.log('ConnectChat WebSocket disconnected cleanly');
-                });
-            } catch (e) {
-                console.warn('Error disconnecting STOMP client:', e);
-            }
+                stompClient.disconnect();
+            } catch (e) {}
         }
         stompClient = null;
         isConnected = false;
-        window.state.connected = false;
+        if (window.state) window.state.connected = false;
     }
 
     return {
         connect,
         disconnect,
         subscribe,
-        subscribeToGroup,
+        subscribeToConversation,
         send,
         isConnected: () => isConnected
     };

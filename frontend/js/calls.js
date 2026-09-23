@@ -1,5 +1,6 @@
 /**
- * ConnectChat WebRTC Audio & Video Calling Module
+ * Let's Talk — WebRTC Audio & Video Calling Module
+ * Manages peer connection, STUN/TURN, signaling over WebSocket, local/remote streams, and call states.
  */
 window.Calls = (function () {
     let peerConnection = null;
@@ -7,17 +8,19 @@ window.Calls = (function () {
     let remoteStream = null;
     let activeCallType = 'video';
     let targetPeerId = null;
+    let activeCallId = null;
     let callTimerInterval = null;
     let callSeconds = 0;
 
     const rtcConfig = {
-        iceServers: window.APP_CONFIG.ICE_SERVERS || [
-            { urls: 'stun:stun.l.google.com:19302' }
+        iceServers: (window.APP_CONFIG && window.APP_CONFIG.ICE_SERVERS) || [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
         ]
     };
 
     function startCall(receiverId, type = 'video') {
-        if (!window.state.currentUser) return;
+        if (!window.state || !window.state.currentUser) return;
         targetPeerId = receiverId;
         activeCallType = type;
 
@@ -41,12 +44,12 @@ window.Calls = (function () {
 
             peerConnection = new RTCPeerConnection(rtcConfig);
 
-            // Add local tracks to peer connection
+            // Add local tracks
             localStream.getTracks().forEach(track => {
                 peerConnection.addTrack(track, localStream);
             });
 
-            // Handle remote track
+            // Handle remote streams
             peerConnection.ontrack = (event) => {
                 const remoteVid = document.getElementById('call-remote-video');
                 if (remoteVid && event.streams[0]) {
@@ -61,6 +64,7 @@ window.Calls = (function () {
                 if (event.candidate) {
                     sendSignal({
                         type: 'ICE_CANDIDATE',
+                        callId: activeCallId,
                         senderId: window.state.currentUser.id,
                         receiverId: peerId,
                         payload: event.candidate
@@ -81,10 +85,10 @@ window.Calls = (function () {
                 await peerConnection.setLocalDescription(offer);
 
                 sendSignal({
-                    type: 'OFFER',
+                    type: 'CALL_OFFER',
                     senderId: window.state.currentUser.id,
                     senderName: window.state.currentUser.fullName || window.state.currentUser.username,
-                    senderAvatar: window.state.currentUser.avatarUrl || '',
+                    senderPhoto: window.state.currentUser.profilePhoto || '',
                     receiverId: peerId,
                     callType: type,
                     payload: offer
@@ -92,7 +96,7 @@ window.Calls = (function () {
             }
         } catch (err) {
             console.error('Call initialization failed:', err);
-            window.UI.showToast('Could not access microphone/camera', 'error');
+            window.UI && window.UI.showToast('Could not access camera/microphone.', 'error');
             endCall();
         }
     }
@@ -100,39 +104,36 @@ window.Calls = (function () {
     async function handleIncomingCallSignal(signal) {
         if (!signal || !signal.type) return;
 
-        switch (signal.type) {
-            case 'OFFER':
-                targetPeerId = signal.senderId;
-                activeCallType = signal.callType || 'video';
+        const sigType = signal.type.toUpperCase();
+
+        if (sigType === 'CALL_OFFER' || sigType === 'OFFER') {
+            targetPeerId = signal.senderId;
+            activeCallId = signal.callId;
+            activeCallType = signal.callType || 'video';
+            if (window.state) {
+                if (!window.state.call) window.state.call = {};
                 window.state.call.pendingOffer = signal;
-                showIncomingRingingModal(signal);
-                break;
-
-            case 'ANSWER':
-                if (peerConnection) {
-                    await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.payload));
+            }
+            showIncomingRingingModal(signal);
+        } else if (sigType === 'CALL_ANSWER' || sigType === 'ANSWER') {
+            if (peerConnection) {
+                activeCallId = signal.callId || activeCallId;
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.payload));
+            }
+        } else if (sigType === 'ICE_CANDIDATE') {
+            if (peerConnection && signal.payload) {
+                try {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(signal.payload));
+                } catch (e) {
+                    console.warn('Error adding ICE candidate:', e);
                 }
-                break;
-
-            case 'ICE_CANDIDATE':
-                if (peerConnection && signal.payload) {
-                    try {
-                        await peerConnection.addIceCandidate(new RTCIceCandidate(signal.payload));
-                    } catch (e) {
-                        console.warn('Error adding ICE candidate:', e);
-                    }
-                }
-                break;
-
-            case 'CALL_REJECT':
-                window.UI.showToast('Call was declined', 'info');
-                cleanupCall();
-                break;
-
-            case 'CALL_END':
-                window.UI.showToast('Call ended', 'info');
-                cleanupCall();
-                break;
+            }
+        } else if (sigType === 'CALL_REJECTED' || sigType === 'CALL_REJECT') {
+            window.UI && window.UI.showToast('Call was declined.', 'info');
+            cleanupCall();
+        } else if (sigType === 'CALL_ENDED' || sigType === 'CALL_END') {
+            window.UI && window.UI.showToast('Call ended.', 'info');
+            cleanupCall();
         }
     }
 
@@ -151,9 +152,10 @@ window.Calls = (function () {
         const modal = document.getElementById('incoming-call-modal');
         if (modal) modal.classList.add('hidden');
 
-        const offerSignal = window.state.call.pendingOffer;
+        const offerSignal = window.state && window.state.call && window.state.call.pendingOffer;
         if (!offerSignal) return;
 
+        activeCallId = offerSignal.callId;
         showCallModal(true, 'Connecting...', offerSignal.callType || 'video');
 
         try {
@@ -163,7 +165,8 @@ window.Calls = (function () {
             await peerConnection.setLocalDescription(answer);
 
             sendSignal({
-                type: 'ANSWER',
+                type: 'CALL_ANSWER',
+                callId: activeCallId,
                 senderId: window.state.currentUser.id,
                 receiverId: offerSignal.senderId,
                 payload: answer
@@ -178,15 +181,18 @@ window.Calls = (function () {
         const modal = document.getElementById('incoming-call-modal');
         if (modal) modal.classList.add('hidden');
 
-        const offerSignal = window.state.call.pendingOffer;
+        const offerSignal = window.state && window.state.call && window.state.call.pendingOffer;
         if (offerSignal) {
             sendSignal({
-                type: 'CALL_REJECT',
+                type: 'CALL_REJECTED',
+                callId: offerSignal.callId,
                 senderId: window.state.currentUser.id,
                 receiverId: offerSignal.senderId
             });
         }
-        window.state.call.pendingOffer = null;
+        if (window.state && window.state.call) {
+            window.state.call.pendingOffer = null;
+        }
     }
 
     function onCallConnected() {
@@ -203,9 +209,10 @@ window.Calls = (function () {
     }
 
     function endCall() {
-        if (targetPeerId && window.state.currentUser) {
+        if (targetPeerId && window.state && window.state.currentUser) {
             sendSignal({
-                type: 'CALL_END',
+                type: 'CALL_ENDED',
+                callId: activeCallId,
                 senderId: window.state.currentUser.id,
                 receiverId: targetPeerId
             });
@@ -231,7 +238,10 @@ window.Calls = (function () {
 
         remoteStream = null;
         targetPeerId = null;
-        window.state.call.pendingOffer = null;
+        activeCallId = null;
+        if (window.state && window.state.call) {
+            window.state.call.pendingOffer = null;
+        }
 
         showCallModal(false);
     }
@@ -263,7 +273,9 @@ window.Calls = (function () {
         const localVid = document.getElementById('call-local-video');
 
         if (statusEl && statusText) statusEl.textContent = statusText;
-        if (peerNameEl && window.state.activeChat) peerNameEl.textContent = window.state.activeChat.name;
+        if (peerNameEl && window.state && window.state.activeChat) {
+            peerNameEl.textContent = window.state.activeChat.name;
+        }
 
         if (localVid) localVid.style.display = callType === 'video' ? 'block' : 'none';
         if (modal) modal.classList.toggle('hidden', !show);

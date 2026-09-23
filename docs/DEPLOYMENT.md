@@ -1,89 +1,191 @@
-# ConnectChat Production Deployment Guide
+# Let's Talk (ConnectChat) — Deployment Guide
 
-This guide covers complete production deployment steps for ConnectChat using Java Spring Boot 3, MySQL 8, Nginx reverse proxy with SSL, and systemd or Docker.
+This guide covers local setup and production deployment using Apache HTTP Server, MySQL 8, Java 17+, and SSL/TLS HTTPS.
 
 ---
 
 ## 1. Prerequisites
-- **Operating System**: Ubuntu 22.04 LTS or any modern Linux / Windows Server
-- **Runtime**: OpenJDK 17 or 21 LTS
-- **Database**: MySQL 8.0+
-- **Web Server**: Nginx 1.20+ (for reverse proxy, WebSocket upgrade, and SSL)
-- **Certificates**: Let's Encrypt Certbot or custom SSL certificate
+- **Java**: OpenJDK 17 LTS or 21 LTS
+- **Build Tool**: Maven 3.8+ (or included `./mvnw` / `mvnw.cmd`)
+- **Database**: MySQL 8.0+ (Development fallback: embedded persistent H2)
+- **Web Server**: Apache HTTP Server 2.4+ (`httpd` or `apache2`) with `mod_ssl`, `mod_proxy`, `mod_proxy_http`, and `mod_proxy_wstunnel`
+- **SSL Certificate**: Let's Encrypt Certbot or trusted CA certificate
 
 ---
 
-## 2. Database Setup (MySQL 8.0+)
+## 2. Local Development Setup
 
-Log in to MySQL and initialize the database and dedicated user:
+### Quick Start (H2 Zero-Config Fallback)
+The application is pre-configured to run out of the box with zero external dependencies using file-backed H2 in MySQL compatibility mode:
+```powershell
+# Windows
+.\mvnw.cmd spring-boot:run
 
-```sql
-CREATE DATABASE connectchat_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'connectchat_user'@'localhost' IDENTIFIED BY 'StrongProductionPassword!2026';
-GRANT ALL PRIVILEGES ON connectchat_db.* TO 'connectchat_user'@'localhost';
-FLUSH PRIVILEGES;
+# Linux / macOS
+./mvnw spring-boot:run
+```
+Open your browser at `http://localhost:8080`.
+
+### MySQL 8.0 Database Setup
+1. Create the database and user in MySQL:
+   ```sql
+   CREATE DATABASE connectchat_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER 'connectchat_user'@'localhost' IDENTIFIED BY 'YourSecurePassword123!';
+   GRANT ALL PRIVILEGES ON connectchat_db.* TO 'connectchat_user'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+2. Execute the schema:
+   ```bash
+   mysql -u connectchat_user -p connectchat_db < database/schema.sql
+   ```
+3. Set environment variables:
+   ```bash
+   export DB_URL="jdbc:mysql://localhost:3306/connectchat_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+   export DB_DRIVER="com.mysql.cj.jdbc.Driver"
+   export DB_USERNAME="connectchat_user"
+   export DB_PASSWORD="YourSecurePassword123!"
+   ```
+4. Run the application:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+---
+
+## 3. Production Deployment Architecture Models
+
+### Model B: Spring Boot Serves Frontend + Apache HTTPS Reverse Proxy (Recommended)
+In this model, Spring Boot serves all static HTML/CSS/JS files directly from its classpath (`src/main/resources/static/`), and Apache HTTP Server acts as the public-facing HTTPS gateway and WebSocket upgrade proxy.
+
+**Advantages**: Single deployable artifact (`.jar`), zero static file synchronization issues, unified routing.
+
+#### Apache Virtual Host Configuration (`/etc/apache2/sites-available/letstalk.conf`):
+```apache
+<VirtualHost *:80>
+    ServerName chat.yourdomain.com
+    # Redirect all HTTP traffic to HTTPS
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName chat.yourdomain.com
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/chat.yourdomain.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/chat.yourdomain.com/privkey.pem
+    SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
+    SSLCipherSuite HIGH:!aNULL:!MD5
+
+    # WebSocket Proxy for STOMP / SockJS
+    RewriteEngine on
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/ws/(.*) ws://127.0.0.1:8080/ws/$1 [P,L]
+
+    ProxyPass /ws/ ws://127.0.0.1:8080/ws/
+    ProxyPassReverse /ws/ ws://127.0.0.1:8080/ws/
+
+    # Proxy all REST API and Static Requests to Spring Boot
+    ProxyPass / http://127.0.0.1:8080/
+    ProxyPassReverse / http://127.0.0.1:8080/
+
+    # Security Headers
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+    ErrorLog ${APACHE_LOG_DIR}/letstalk_error.log
+    CustomLog ${APACHE_LOG_DIR}/letstalk_access.log combined
+</VirtualHost>
 ```
 
-Import schema and seed data (optional):
+---
+
+### Model A: Apache Serves Static Content + Proxies API & WebSocket
+In this model, Apache serves static HTML/CSS/JS directly from `/var/www/letstalk/static` and reverse-proxies `/api` and `/ws` to Spring Boot.
+
+#### Apache Virtual Host Configuration:
+```apache
+<VirtualHost *:443>
+    ServerName chat.yourdomain.com
+    DocumentRoot /var/www/letstalk/static
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/chat.yourdomain.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/chat.yourdomain.com/privkey.pem
+
+    # Serve static assets directly
+    <Directory /var/www/letstalk/static>
+        Options -Indexes +FollowSymLinks
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    # Serve uploaded user media directly
+    Alias /uploads /var/connectchat/uploads
+    <Directory /var/connectchat/uploads>
+        Options -Indexes
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    # WebSocket Proxy
+    RewriteEngine on
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/ws/(.*) ws://127.0.0.1:8080/ws/$1 [P,L]
+
+    ProxyPass /ws/ ws://127.0.0.1:8080/ws/
+    ProxyPassReverse /ws/ ws://127.0.0.1:8080/ws/
+
+    # Proxy REST API to Spring Boot
+    ProxyPass /api http://127.0.0.1:8080/api
+    ProxyPassReverse /api http://127.0.0.1:8080/api
+</VirtualHost>
+```
+
+---
+
+## 4. HTTPS & WebRTC Critical Requirements
+> [!IMPORTANT]
+> Modern browsers strictly restrict camera (`navigator.mediaDevices.getUserMedia`) and microphone permissions to **HTTPS** origins (or `localhost`). Plain HTTP deployment will prevent audio and video calling, and voice recording. Always configure HTTPS in production.
+
+### WebRTC STUN / TURN Server Configuration
+For peer-to-peer audio and video calling across restrictive NATs or symmetric corporate firewalls, a TURN server (such as `coturn`) should be deployed:
 ```bash
-mysql -u connectchat_user -p connectchat_db < database/schema.sql
-mysql -u connectchat_user -p connectchat_db < database/seed.sql
+sudo apt-get install coturn
+# Configure /etc/turnserver.conf with realm, listening-port=3478, and credentials
+```
+Add the TURN server to `window.APP_CONFIG.ICE_SERVERS` in `src/main/resources/static/js/api.js`:
+```javascript
+ICE_SERVERS: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    {
+        urls: 'turn:turn.yourdomain.com:3478',
+        username: 'turnuser',
+        credential: 'turnpassword'
+    }
+]
 ```
 
 ---
 
-## 3. Building the Application
+## 5. Systemd Production Service Setup
 
-From the root directory:
-```bash
-# Clean, test and build production executable JAR
-cd backend
-./mvnw clean package -DskipTests
-```
-The executable JAR is produced at `backend/target/connectchat-1.0.0.jar`.
-
----
-
-## 4. Production Environment Configuration
-
-Create `/etc/connectchat/connectchat.env`:
-```ini
-PORT=8080
-DB_URL=jdbc:mysql://localhost:3306/connectchat_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-DB_DRIVER=com.mysql.cj.jdbc.Driver
-DB_USERNAME=connectchat_user
-DB_PASSWORD=StrongProductionPassword!2026
-FILE_UPLOAD_PATH=/var/connectchat/uploads
-MAX_FILE_SIZE=50MB
-MAX_REQUEST_SIZE=50MB
-AUTH_TOKEN_EXPIRY_HOURS=72
-JWT_SECRET=c68e3f94b1a2491a92e624f110c9daec3081e81b6dc240c5f0b4d45be7592cf1
-CORS_ALLOWED_ORIGINS=https://chat.yourdomain.com
-HIBERNATE_DDL_AUTO=validate
-```
-
-Ensure upload directory permissions:
-```bash
-sudo mkdir -p /var/connectchat/uploads
-sudo chown -R connectchat:connectchat /var/connectchat
-```
-
----
-
-## 5. Systemd Service Setup
-
-Create `/etc/systemd/system/connectchat.service`:
+Create `/etc/systemd/system/letstalk.service`:
 ```ini
 [Unit]
-Description=ConnectChat Real-Time Communication Platform
+Description=Let's Talk Real-Time Communication Platform
 After=network.target mysql.service
 
 [Service]
 User=connectchat
 Group=connectchat
-EnvironmentFile=/etc/connectchat/connectchat.env
-WorkingDirectory=/opt/connectchat
-ExecStart=/usr/bin/java -Xms512m -Xmx1024m -jar /opt/connectchat/connectchat-1.0.0.jar
+EnvironmentFile=/etc/letstalk/letstalk.env
+WorkingDirectory=/opt/letstalk
+ExecStart=/usr/bin/java -Xms512m -Xmx1024m -jar /opt/letstalk/connectchat-1.0.0.jar
 SuccessExitStatus=143
 Restart=always
 RestartSec=10
@@ -92,84 +194,9 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-Enable and start the service:
+Enable and start:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable connectchat
-sudo systemctl start connectchat
-sudo systemctl status connectchat
-```
-
----
-
-## 6. Nginx Reverse Proxy & WebSocket Configuration
-
-Configure `/etc/nginx/sites-available/connectchat`:
-
-```nginx
-server {
-    listen 80;
-    server_name chat.yourdomain.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name chat.yourdomain.com;
-
-    ssl_certificate /etc/letsencrypt/live/chat.yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/chat.yourdomain.com/privkey.pem;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-
-    client_max_body_size 50M;
-
-    # Static uploads caching
-    location /uploads/ {
-        alias /var/connectchat/uploads/;
-        expires 30d;
-        add_header Cache-Control "public, no-transform";
-    }
-
-    # WebSocket STOMP endpoint
-    location /ws {
-        proxy_pass http://127.0.0.1:8080/ws;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "Upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_read_timeout 86400s;
-        proxy_send_timeout 86400s;
-    }
-
-    # REST API and Static Frontend
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-Enable configuration and reload:
-```bash
-sudo ln -s /etc/nginx/sites-available/connectchat /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
----
-
-## 7. WebRTC Production Considerations
-For WebRTC audio and video calls across different networks or firewalls (NAT), configure STUN/TURN servers in `frontend/js/config.js` or through environment variables:
-```javascript
-iceServers: [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'turn:turn.yourdomain.com:3478', username: 'user', credential: 'password' }
-]
+sudo systemctl enable letstalk
+sudo systemctl start letstalk
 ```

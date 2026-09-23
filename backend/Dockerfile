@@ -1,5 +1,5 @@
 # =======================================================
-# Dockerfile for Let's Talk Spring Boot Backend
+# Dockerfile for Let's Talk (ConnectChat)
 # Multi-stage build for optimal image size and security
 # =======================================================
 
@@ -12,10 +12,10 @@ COPY mvnw mvnw.cmd pom.xml ./
 COPY .mvn .mvn
 RUN chmod +x ./mvnw && ./mvnw dependency:go-offline -B || true
 
-# Copy application source code
+# Copy application source code (including static frontend in src/main/resources/static)
 COPY src src
 
-# Build executable JAR without running tests
+# Build executable JAR
 RUN ./mvnw clean package -DskipTests -B
 
 # Stage 2: Runtime Container

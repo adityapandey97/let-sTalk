@@ -1,12 +1,20 @@
 {
-  "name": "letstalk-frontend",
+  "name": "lets-talk-frontend",
   "version": "1.0.0",
-  "description": "Frontend single-page application for Let's Talk – Real-Time Messaging, Media Sharing & WebRTC Calling",
+  "description": "Let's Talk — Modern Vanilla HTML5/CSS3/JavaScript Frontend",
+  "main": "index.html",
   "scripts": {
-    "start": "npx serve -s . -l 3000",
-    "dev": "npx serve -s . -l 3000"
+    "start": "npx -y serve -s . -l 3000",
+    "serve": "npx -y serve -s . -l 3000"
   },
-  "keywords": ["chat", "realtime", "webrtc", "messaging", "social"],
-  "author": "Let's Talk Team",
+  "keywords": [
+    "chat",
+    "realtime",
+    "messaging",
+    "webrtc",
+    "stomp",
+    "websocket"
+  ],
+  "author": "Let's Talk Engineering Team",
   "license": "MIT"
 }

@@ -229,14 +229,50 @@
     border-radius: var(--radius-xs);
     overflow: hidden;
     margin-bottom: 6px;
+    position: relative;
+}
+
+.message-image-wrap {
+    position: relative;
+    display: inline-block;
 }
 
 .message-image-wrap img {
     max-height: 320px;
     width: auto;
-    object-fit: contain;
+    max-width: 100%;
+    object-fit: cover;
     border-radius: var(--radius-xs);
     cursor: pointer;
+    display: block;
+    transition: transform var(--transition-fast);
+}
+
+.message-image-wrap img:hover {
+    opacity: 0.95;
+}
+
+.media-download-pill {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #ffffff;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.85;
+    transition: all var(--transition-fast);
+    backdrop-filter: blur(4px);
+}
+
+.media-download-pill:hover {
+    background: var(--primary-color);
+    opacity: 1;
+    transform: scale(1.1);
 }
 
 .message-video-wrap video {
@@ -254,18 +290,32 @@
     padding: 10px 12px;
     border-radius: var(--radius-xs);
     margin-bottom: 6px;
+    border: 1px solid var(--border-light);
 }
 
 .document-icon {
-    width: 36px;
-    height: 36px;
-    background-color: var(--primary-light);
-    color: var(--primary-color);
+    width: 38px;
+    height: 38px;
+    background: var(--primary-gradient);
+    color: #ffffff;
     border-radius: var(--radius-xs);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.3);
+}
+
+.doc-ext-badge {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.message-text-content {
+    margin-top: 4px;
+    line-height: 1.45;
 }
 
 .document-info {
@@ -503,6 +553,7 @@ body.theme-purple .bubble-reaction-trigger {
     border-top: 1px solid var(--border-color);
     z-index: var(--z-header);
     position: relative;
+    flex-shrink: 0;
 }
 
 /* Active Quoted Reply Bar */
@@ -513,6 +564,10 @@ body.theme-purple .bubble-reaction-trigger {
     padding: 8px 16px;
     background-color: var(--bg-hover);
     border-left: 4px solid var(--primary-color);
+}
+
+.chat-reply-banner.hidden {
+    display: none !important;
 }
 
 .reply-banner-content {
@@ -618,6 +673,10 @@ body.theme-purple .bubble-reaction-trigger {
     width: 100%;
     padding: 0 12px;
     background-color: var(--bg-chat-footer);
+}
+
+.voice-record-hud.hidden {
+    display: none !important;
 }
 
 .record-timer-pulse {

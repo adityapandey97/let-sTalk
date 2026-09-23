@@ -83,13 +83,24 @@ window.UI = (function () {
             btn.classList.toggle('active', btn.dataset.tab === tabName);
         });
 
+        const slider = document.getElementById('sidebar-tabs-slider');
+        if (slider) {
+            if (tabName === 'chats') {
+                slider.style.transform = 'translateX(0%)';
+            } else if (tabName === 'groups') {
+                slider.style.transform = 'translateX(100%)';
+            } else if (tabName === 'requests') {
+                slider.style.transform = 'translateX(200%)';
+            }
+        }
+
         const chatsContainer = document.getElementById('sidebar-chats-container');
-        const contactsContainer = document.getElementById('sidebar-contacts-container');
         const groupsContainer = document.getElementById('sidebar-groups-container');
+        const requestsContainer = document.getElementById('sidebar-requests-container');
 
         if (chatsContainer) chatsContainer.classList.toggle('hidden', tabName !== 'chats');
-        if (contactsContainer) contactsContainer.classList.toggle('hidden', tabName !== 'contacts');
         if (groupsContainer) groupsContainer.classList.toggle('hidden', tabName !== 'groups');
+        if (requestsContainer) requestsContainer.classList.toggle('hidden', tabName !== 'requests');
     }
 
     function toggleMobileChat(isActive) {

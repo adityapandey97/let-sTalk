@@ -17,7 +17,7 @@
     height: 40px;
     border-radius: var(--radius-full);
     object-fit: cover;
-    background: linear-gradient(135deg, #00a884 0%, #008069 100%);
+    background: var(--primary-gradient);
     color: #ffffff;
     font-weight: 600;
     font-size: var(--font-size-md);
@@ -110,13 +110,13 @@
     font-size: var(--font-size-sm);
     padding: 10px 20px;
     border-radius: var(--radius-sm);
-    box-shadow: 0 1px 3px rgba(0, 168, 132, 0.2);
+    box-shadow: 0 1px 3px rgba(var(--primary-rgb), 0.2);
     transition: all var(--transition-fast);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #008f6f 0%, #00705a 100%);
-    box-shadow: 0 2px 6px rgba(0, 168, 132, 0.3);
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+    box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.3);
 }
 
 .btn-secondary {

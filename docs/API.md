@@ -1,268 +1,298 @@
-# ConnectChat API Reference
+# Let's Talk — Complete REST API & WebSocket Reference
 
-This document provides complete documentation for the ConnectChat REST API and WebSocket STOMP messaging protocol.
-
----
-
-## Base URLs
-- **REST Endpoints**: `http://localhost:8080/api`
-- **Static Media Uploads**: `http://localhost:8080/uploads/{filename}`
-- **WebSocket STOMP Handshake**: `ws://localhost:8080/ws` (with SockJS fallback: `http://localhost:8080/ws`)
+This document provides complete documentation for the REST API and WebSocket STOMP messaging protocol.
 
 ---
 
-## Authentication
-ConnectChat uses persistent Bearer tokens generated upon registration or login.
-Pass the token in the `Authorization` HTTP header:
-```http
-Authorization: Bearer <token>
-```
-Alternative for WebSocket handshakes: `?token=<token>` query parameter.
+## Base URLs & Authentication
+- **REST Base**: `/api`
+- **Uploads Base**: `/uploads`
+- **WebSocket STOMP Handshake**: `/ws` (with SockJS support)
+- **Authentication**: JWT token passed in the `Authorization: Bearer <token>` header, or in STOMP CONNECT headers.
 
 ---
 
 ## 1. Authentication Endpoints (`/api/auth`)
 
 ### Register Account
-`POST /api/auth/register`
-- **Request Body**:
-  ```json
-  {
-    "fullName": "Aditya Pandey",
-    "username": "aditya",
-    "email": "aditya@connectchat.com",
-    "password": "password123",
-    "bio": "Lead Engineer & Architect",
-    "avatarUrl": ""
+`POST /api/auth/register` (Public)
+```json
+{
+  "fullName": "Jane Doe",
+  "username": "janedoe",
+  "email": "jane@example.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "bio": "Software Engineer",
+  "profilePhoto": "/uploads/profile/sample.jpg"
+}
+```
+**Response (201 Created)**:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "fullName": "Jane Doe",
+    "username": "janedoe",
+    "email": "jane@example.com",
+    "bio": "Software Engineer",
+    "profilePhoto": "/uploads/profile/sample.jpg",
+    "online": true,
+    "lastSeen": "2026-09-23T10:00:00"
   }
-  ```
-- **Response (201 Created)**:
-  ```json
-  {
-    "token": "d7kF9a0_VbQ3...",
-    "user": {
-      "id": 1,
-      "fullName": "Aditya Pandey",
-      "username": "aditya",
-      "email": "aditya@connectchat.com",
-      "bio": "Lead Engineer & Architect",
-      "avatarUrl": "",
-      "online": true,
-      "lastSeen": "2026-09-22T01:30:00"
-    },
-    "message": "Registration successful"
-  }
-  ```
+}
+```
 
 ### Login
-`POST /api/auth/login`
-- **Request Body**:
-  ```json
-  {
-    "identifier": "aditya",
-    "password": "password123"
-  }
-  ```
-- **Response (200 OK)**:
-  ```json
-  {
-    "token": "d7kF9a0_VbQ3...",
-    "user": { ... },
-    "message": "Login successful"
-  }
-  ```
+`POST /api/auth/login` (Public)
+```json
+{
+  "identifier": "janedoe",
+  "password": "Password123!"
+}
+```
+**Response (200 OK)**: Returns JWT token and UserProfileDto.
 
 ### Logout
-`POST /api/auth/logout`
-- **Headers**: `Authorization: Bearer <token>`
-- **Response (200 OK)**:
-  ```json
-  {
-    "message": "Logged out successfully"
-  }
-  ```
+`POST /api/auth/logout` (Bearer Auth)
+**Response (200 OK)**: `{"success": true, "message": "Logged out successfully"}`
 
 ### Current User Profile
-`GET /api/auth/me`
-- **Headers**: `Authorization: Bearer <token>`
-- **Response (200 OK)**: `UserDto`
+`GET /api/auth/me` (Bearer Auth)
+**Response (200 OK)**: Returns authenticated UserProfileDto.
 
 ---
 
-## 2. User & Contacts Endpoints (`/api/users`, `/api/connections`)
+## 2. User Endpoints (`/api/users`)
 
 ### Search Users
-`GET /api/users/search?username={query}&currentUserId={userId}`
-- Returns users matching query with relationship status (`CONNECTED`, `OUTGOING_PENDING`, `INCOMING_PENDING`, `NONE`).
+`GET /api/users/search?q={query}` (Bearer Auth)
+- Returns list of matching users with their connection status (`ACCEPTED`, `PENDING_SENT`, `PENDING_RECEIVED`, `NONE`).
 
-### Check Username Availability
-`GET /api/users/username-available?username={query}`
+### Get User Profile
+`GET /api/users/{id}` (Bearer Auth)
+- Returns UserProfileDto for specified user.
 
 ### Update Profile
-`PUT /api/users/{userId}/profile`
-- **Request Body**:
-  ```json
-  {
-    "fullName": "Aditya Pandey",
-    "bio": "Updated bio text",
-    "avatarUrl": "/uploads/uuid_avatar.png",
-    "bgWallpaper": ""
-  }
-  ```
+`PUT /api/users/profile` (Bearer Auth)
+```json
+{
+  "fullName": "Jane Smith",
+  "username": "janesmith",
+  "bio": "Building real-time apps",
+  "profilePhoto": "/uploads/profile/new_photo.jpg"
+}
+```
+
+### Upload Profile Photo
+`POST /api/users/profile-photo` (Bearer Auth)
+- Accepts `multipart/form-data` with `file` part or JSON body with `photoUrl`.
+
+---
+
+## 3. Connections Endpoints (`/api/connections`)
 
 ### Send Connection Request
-`POST /api/connections/request`
-- **Request Body**:
-  ```json
-  {
-    "senderId": 1,
-    "receiverId": 2
-  }
-  ```
+`POST /api/connections/request` (Bearer Auth)
+```json
+{
+  "targetUserId": 2
+}
+```
+
+### List Pending Incoming Requests
+`GET /api/connections/requests` (Bearer Auth)
+- Returns array of pending ConnectionDto where current user is receiver.
 
 ### Accept Connection Request
-`POST /api/connections/{requestId}/accept?userId={userId}`
+`POST /api/connections/{id}/accept` (Bearer Auth)
+- Accepts connection and automatically provisions private Conversation.
 
 ### Reject Connection Request
-`POST /api/connections/{requestId}/reject?userId={userId}`
+`POST /api/connections/{id}/reject` (Bearer Auth)
+- Declines pending connection request.
 
 ### List Accepted Connections
-`GET /api/connections/{userId}`
-
-### List Pending Requests
-`GET /api/connections/requests/{userId}`
+`GET /api/connections` (Bearer Auth)
+- Returns array of accepted connections for current user.
 
 ---
 
-## 3. Messaging Endpoints (`/api/messages`)
+## 4. Conversations Endpoints (`/api/conversations`)
 
-### Load Chat History (1-to-1)
-`GET /api/messages/private?userId={userId}&otherUserId={otherUserId}`
-- Automatically marks unread incoming messages as `READ`.
-- Honors "Delete for Me" timestamp filters.
+### List Conversations
+`GET /api/conversations` (Bearer Auth)
+- Returns user's conversations sorted by latest activity, including unread message count and recipient presence.
 
-### Delete Message for Me
-`DELETE /api/messages/{messageId}?userId={userId}`
+### Get Conversation Details
+`GET /api/conversations/{id}` (Bearer Auth)
+- Returns ConversationDto with participants list.
 
-### Delete Message for Everyone
-`POST /api/messages/{messageId}/delete-for-everyone?userId={userId}`
-- Allowed only for message sender within 24 hours.
-- Sets `deletedForEveryone = true`, replaces content with "This message was deleted".
+### Get or Create Private Conversation
+`POST /api/conversations/private/{otherUserId}` (Bearer Auth)
+- Retrieves existing private conversation or creates a new one between the two users.
 
-### Clear Chat History for Me
-`DELETE /api/messages/private?userId={userId}&otherUserId={otherUserId}`
-- Updates the user's `clearedAt` watermark without deleting the other user's history.
+### Clear Conversation History
+`DELETE /api/conversations/{id}` (Bearer Auth)
+- Clears conversation view for requesting user without affecting other participants.
 
 ---
 
-## 4. Group Chat Endpoints (`/api/groups`)
+## 5. Messages Endpoints (`/api/messages`)
+
+### Get Conversation Messages
+`GET /api/conversations/{id}/messages` (Bearer Auth)
+- Returns chronological message history with reply attachments and deletion states. Automatically marks last message as read.
+
+### Send Message
+`POST /api/messages` (Bearer Auth)
+```json
+{
+  "conversationId": 1,
+  "content": "Hello there!",
+  "type": "TEXT",
+  "replyToMessageId": null,
+  "mediaUrl": null,
+  "fileName": null,
+  "fileSize": null
+}
+```
+
+### Delete Message (For Me)
+`DELETE /api/messages/{id}` (Bearer Auth)
+- Hides message from current user's conversation stream.
+
+### Delete Message (For Everyone)
+`POST /api/messages/{id}/delete-for-everyone` (Bearer Auth)
+- Sender-only deletion within 24h. Marks `deletedForEveryone = true`, replaces content with "This message was deleted." and broadcasts deletion event.
+
+---
+
+## 6. File & Media Endpoints (`/api/files`)
+
+### Upload File
+`POST /api/files/upload` (Public / Bearer Auth)
+- Multipart upload with `file` and optional `category` (`profile`, `images`, `videos`, `documents`, `voice`, `stories`).
+- Enforces 50MB limit and safe UUID filenames.
+**Response (201 Created)**:
+```json
+{
+  "success": true,
+  "fileUrl": "/uploads/images/3f82a1...jpg",
+  "fileName": "photo.jpg",
+  "fileSize": 1048576,
+  "contentType": "image/jpeg"
+}
+```
+
+### Delete File
+`DELETE /api/files?fileUrl={url}` (Bearer Auth)
+- Deletes uploaded file from filesystem.
+
+---
+
+## 7. Groups Endpoints (`/api/groups`)
 
 ### Create Group
-`POST /api/groups`
-- **Request Body**:
-  ```json
-  {
-    "name": "Dev Project Alpha",
-    "creatorId": 1,
-    "memberIds": [2, 3]
-  }
-  ```
+`POST /api/groups` (Bearer Auth)
+```json
+{
+  "name": "Design Team",
+  "photo": "",
+  "memberIds": [2, 3]
+}
+```
 
-### List User Groups
-`GET /api/groups/user/{userId}`
+### List Groups
+`GET /api/groups` (Bearer Auth)
+- Returns groups where current user is a member.
 
-### Group Messages
-`GET /api/groups/{groupId}/messages?userId={userId}`
+### Get Group Details
+`GET /api/groups/{id}` (Bearer Auth)
+- Returns GroupDto with full member roster and associated `conversationId`.
 
-### Group Members
-`GET /api/groups/{groupId}/members?userId={userId}`
+### Update Group
+`PUT /api/groups/{id}` (Bearer Auth)
+- Creator only: updates group name or photo.
 
----
+### Add Member
+`POST /api/groups/{id}/members` (Bearer Auth)
+```json
+{
+  "userId": 4
+}
+```
 
-## 5. Media & File Upload (`/api/media/upload`, `/api/files/upload`)
-
-### Upload Attachment or Avatar
-`POST /api/media/upload` (or `/api/files/upload`)
-- **Content-Type**: `multipart/form-data`
-- **Form Param**: `file` (Multipart file)
-- **Response (200 OK)**:
-  ```json
-  {
-    "success": true,
-    "url": "/uploads/93c3c3a4-8f7b-4029-a1b2-10f82834d8e4_document.pdf",
-    "fileName": "document.pdf",
-    "fileSize": 128450,
-    "contentType": "application/pdf"
-  }
-  ```
+### Remove Member / Leave Group
+`DELETE /api/groups/{id}/members/{userId}` (Bearer Auth)
+- Allows group creator to remove member, or member to leave.
 
 ---
 
-## 6. Ephemeral Stories (`/api/stories`)
+## 8. Stories Endpoints (`/api/stories`)
 
-### Create Story
-`POST /api/stories`
-- **Request Body**:
-  ```json
-  {
-    "userId": 1,
-    "mediaUrl": "/uploads/sample_story.jpg",
-    "caption": "Project launch day!"
-  }
-  ```
+### Post Story
+`POST /api/stories` (Bearer Auth)
+```json
+{
+  "mediaPath": "/uploads/stories/story123.jpg",
+  "mediaType": "IMAGE"
+}
+```
 
-### Get Stories Feed
-`GET /api/stories/feed/{userId}`
-- Returns active stories from accepted connections (within 24 hours).
+### List Active Stories
+`GET /api/stories` (Bearer Auth)
+- Returns non-expired stories grouped by user, ordered with "Your Story" first.
+
+### Mark Story Viewed
+`POST /api/stories/{id}/view` (Bearer Auth)
+- Records view receipt for story viewer.
+
+### Delete Story
+`DELETE /api/stories/{id}` (Bearer Auth)
+- Deletes user's own story.
 
 ---
 
-## 7. WebSocket STOMP Protocol
+## 9. Calls Endpoints (`/api/calls`)
 
-### Connection & Topics
-Connect to `ws://localhost:8080/ws` with STOMP over SockJS.
+### Call History
+`GET /api/calls` (Bearer Auth)
+- Returns call logs with duration and status (`MISSED`, `ACCEPTED`, `REJECTED`, `ENDED`).
 
-#### Subscriptions:
-1. `/topic/private/{userId}`: Incoming 1-to-1 messages and updates.
-2. `/topic/group/{groupId}`: Incoming group messages.
-3. `/topic/user/{userId}/notifications`: Read receipts, connection alerts, and typing indicators.
-4. `/topic/user/{userId}/call`: WebRTC audio & video signaling packets (OFFER, ANSWER, ICE_CANDIDATE, RINGING, REJECT, END).
+### Initiate Call
+`POST /api/calls/initiate` (Bearer Auth)
+```json
+{
+  "receiverId": 2,
+  "callType": "VIDEO"
+}
+```
 
-#### Publishing Destinations:
-1. `/app/chat.private`: Send private message.
-   ```json
-   {
-     "senderId": 1,
-     "receiverId": 2,
-     "content": "Hello there!",
-     "messageType": "TEXT",
-     "mediaUrl": null,
-     "repliedMessageId": null
-   }
-   ```
-2. `/app/chat.group`: Send group message.
-   ```json
-   {
-     "groupId": 1,
-     "senderId": 1,
-     "content": "Team meeting in 5 mins"
-   }
-   ```
-3. `/app/chat.status`: Send delivery and read receipts.
-   ```json
-   {
-     "userId": 2,
-     "messageId": 45,
-     "status": "READ"
-   }
-   ```
-4. `/app/call.signal`: WebRTC peer-to-peer signaling.
-   ```json
-   {
-     "type": "OFFER",
-     "senderId": 1,
-     "receiverId": 2,
-     "callType": "video",
-     "payload": { "type": "offer", "sdp": "..." }
-   }
-   ```
+### Update Call Status
+`POST /api/calls/{id}/status` (Bearer Auth)
+```json
+{
+  "status": "ENDED"
+}
+```
+
+---
+
+## 10. WebSocket STOMP Protocol (`/ws`)
+
+### Destinations
+- `/app/chat.send` -> Send message to conversation
+- `/app/chat.status` -> Send delivery / read acknowledgment
+- `/app/chat.typing` -> Send throttled typing indicator
+- `/app/call.signal` -> WebRTC SDP and ICE signaling packet
+
+### Subscriptions
+- `/topic/conversation/{id}` -> Live conversation message broadcast
+- `/topic/conversation/{id}/typing` -> Typing indicator stream
+- `/topic/conversation/{id}/status` -> Status updates (`DELIVERED`, `READ`)
+- `/topic/conversation/{id}/delete` -> Live message deletion updates
+- `/topic/user/{id}/notifications` -> Personal notification stream
+- `/topic/user/{id}/call` -> WebRTC signaling receiver stream
+- `/topic/presence` -> Global online/offline presence changes
